@@ -1,5 +1,5 @@
-import { Colors } from "../interfaces/Colors";
-import { FigureNames } from "../interfaces/FigureNames";
+import { Colors } from "../enums/Colors";
+import { FigureNames } from "../enums/FigureNames";
 import { IFigure } from "../interfaces/IFigure";
 
 export class Queen implements IFigure {

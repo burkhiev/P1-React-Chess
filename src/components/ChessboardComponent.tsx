@@ -11,18 +11,19 @@ export const ChessboardComponent = () => {
         'justify-content-center'
     )
 
-    const content = chessboard.cells.map((row, rowIndex) => {
+    const contentArray = chessboard.cells.map((row, rowIndex) => {
         const result = (
             <div
                 key={rowIndex}
-                className={rowClasses}>
-            {
-                row.map((cell, cellIndex) => {
-                    return (
-                        <CellComponent key={cellIndex} />
-                    )
-                })
-            }
+                className={rowClasses}
+            >
+                {
+                    row.map((cell, cellIndex) => {
+                        return (
+                            <CellComponent key={cellIndex} cell={cell} />
+                        )
+                    })
+                }
             </div>
         )
 
@@ -31,7 +32,9 @@ export const ChessboardComponent = () => {
 
     return (
         <>
-            {content}
+            {contentArray.map((renderedRow) => {
+                return renderedRow
+            })}
         </>
     )
 }

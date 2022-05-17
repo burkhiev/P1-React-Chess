@@ -6,7 +6,7 @@ import { Knight } from '../models/figures/Knight';
 import { Pawn } from '../models/figures/Pawn';
 import { Queen } from '../models/figures/Queen';
 import { Rook } from '../models/figures/Rook';
-import { Colors } from '../models/interfaces/Colors';
+import { Colors } from '../models/enums/Colors';
 import { ICell } from '../models/interfaces/ICell';
 import { IChessboard } from '../models/interfaces/IChessboard';
 
@@ -51,15 +51,19 @@ export class ChessboardFactory {
     private static fillWithWhiteFigures(chessboard: IChessboard) {
         const black = Colors.White
         const cells = chessboard.cells
-
+        
         // заполнение пешками
-        let row = cells[1]
+        const pawnRowIndex = 1;
+        let row = cells[pawnRowIndex]
+
         for (let i = 0; i < this.size; i++) {
             row[i] = new Cell(new Pawn(black))
         }
 
         // заполнение тяжелыми фигурами
-        row = cells[0]
+        const heavyRowIndex = 0
+        row = cells[heavyRowIndex]
+
         row[0].figure = new Rook(black)
         row[1].figure = new Knight(black)
         row[2].figure = new Bishop(black)
@@ -79,13 +83,17 @@ export class ChessboardFactory {
         const cells = chessboard.cells
 
         // заполнение пешками
-        let row = cells[1]
+        const pawnRowIndex = 6;
+        let row = cells[pawnRowIndex]
+
         for (let i = 0; i < this.size; i++) {
             row[i] = new Cell(new Pawn(black))
         }
 
         // заполнение тяжелыми фигурами
-        row = cells[0]
+        const heavyRowIndex = 7
+        row = cells[heavyRowIndex]
+
         row[0].figure = new Rook(black)
         row[1].figure = new Knight(black)
         row[2].figure = new Bishop(black)

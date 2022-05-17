@@ -1,19 +1,30 @@
 import classNames from 'classnames'
 import React from 'react'
-import { IFigure } from '../models/interfaces/IFigure'
+import { FigureNames } from '../models/enums/FigureNames'
+import { ICell } from '../models/interfaces/ICell'
+import { FigureComponent } from './FigureComponent'
 
 const cellClasses = classNames(
-    'col-1',
     'border',
-    'border-secondary'
+    'border-secondary',
+    'cell'
 )
 
 interface ICellComponentProps {
-    figure?: IFigure
+    cell: ICell
 }
 
 export default function CellComponent(props: ICellComponentProps) {
-  return (
-      <div className={cellClasses}>Cell</div>
-  )
+    const figure = props.cell.figure
+    let content = <></>
+    
+    if (figure) {
+        content = <FigureComponent figure={figure} />
+    }
+
+    return (
+        <div className={cellClasses}>
+            {content}
+        </div>
+    )
 }

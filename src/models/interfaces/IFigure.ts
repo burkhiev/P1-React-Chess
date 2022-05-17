@@ -1,5 +1,5 @@
-import { Colors } from "./Colors";
-import { FigureNames } from "./FigureNames";
+import { Colors } from "../enums/Colors";
+import { FigureNames } from "../enums/FigureNames";
 
 export interface IFigure {
     // имя свойства name занято и выделяется как устаревшее(@types/react)
