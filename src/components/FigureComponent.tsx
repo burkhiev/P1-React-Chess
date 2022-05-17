@@ -9,9 +9,13 @@ interface IFigureComponentProps {
 
 export const FigureComponent = (props: IFigureComponentProps) => {
     const { figure } = props
-    const stringFigure = FigureNames[figure.figureName]
+    const strFigure = FigureNames[figure.figureName]
+    const strColor = Colors[figure.color]
 
     return (
-        <div>{stringFigure}</div>
+        <div>
+            <span>{strFigure}</span><br />
+            <span>{strColor}</span>
+        </div>
     )
 }

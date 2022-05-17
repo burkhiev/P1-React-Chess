@@ -32,13 +32,24 @@ export class ChessboardFactory {
      */
     private static getClearBoard(): Chessboard {
         const cells: ICell[][] = new Array<Array<ICell>>()
+
+        let colorCounter = 0
         
         for (let i = 0; i < this.size; i++) {
             cells.push([])
 
             for (let j = 0; j < this.size; j++) {
-                cells[i].push(new Cell())
+                let color = Colors.White
+                if (colorCounter % 2 === 1) {
+                    color = Colors.Black
+                }
+
+                cells[i].push(new Cell(color))
+                colorCounter++
             }
+
+            // меняем порядок покраски клеток
+            colorCounter++
         }
         
         return new Chessboard(cells)
@@ -49,29 +60,29 @@ export class ChessboardFactory {
      * @param {IChessboard} chessboard Заполняемая доска
      */
     private static fillWithWhiteFigures(chessboard: IChessboard) {
-        const black = Colors.White
+        const color = Colors.White
         const cells = chessboard.cells
         
         // заполнение пешками
-        const pawnRowIndex = 1;
+        const pawnRowIndex = 6;
         let row = cells[pawnRowIndex]
 
         for (let i = 0; i < this.size; i++) {
-            row[i] = new Cell(new Pawn(black))
+            row[i].figure = new Pawn(color)
         }
 
         // заполнение тяжелыми фигурами
-        const heavyRowIndex = 0
+        const heavyRowIndex = 7
         row = cells[heavyRowIndex]
 
-        row[0].figure = new Rook(black)
-        row[1].figure = new Knight(black)
-        row[2].figure = new Bishop(black)
-        row[3].figure = new King(black)
-        row[4].figure = new Queen(black)
-        row[5].figure = new Bishop(black)
-        row[6].figure = new Knight(black)
-        row[7].figure = new Rook(black)
+        row[0].figure = new Rook(color)
+        row[1].figure = new Knight(color)
+        row[2].figure = new Bishop(color)
+        row[3].figure = new King(color)
+        row[4].figure = new Queen(color)
+        row[5].figure = new Bishop(color)
+        row[6].figure = new Knight(color)
+        row[7].figure = new Rook(color)
     }
 
     /**
@@ -79,28 +90,28 @@ export class ChessboardFactory {
      * @param {IChessboard} chessboard Заполняемая доска
      */
     private static fillWithBlackFigures(chessboard: IChessboard) {
-        const black = Colors.Black
+        const color = Colors.Black
         const cells = chessboard.cells
 
         // заполнение пешками
-        const pawnRowIndex = 6;
+        const pawnRowIndex = 1;
         let row = cells[pawnRowIndex]
 
         for (let i = 0; i < this.size; i++) {
-            row[i] = new Cell(new Pawn(black))
+            row[i].figure = new Pawn(color)
         }
 
         // заполнение тяжелыми фигурами
-        const heavyRowIndex = 7
+        const heavyRowIndex = 0
         row = cells[heavyRowIndex]
 
-        row[0].figure = new Rook(black)
-        row[1].figure = new Knight(black)
-        row[2].figure = new Bishop(black)
-        row[3].figure = new King(black)
-        row[4].figure = new Queen(black)
-        row[5].figure = new Bishop(black)
-        row[6].figure = new Knight(black)
-        row[7].figure = new Rook(black)
+        row[0].figure = new Rook(color)
+        row[1].figure = new Knight(color)
+        row[2].figure = new Bishop(color)
+        row[3].figure = new King(color)
+        row[4].figure = new Queen(color)
+        row[5].figure = new Bishop(color)
+        row[6].figure = new Knight(color)
+        row[7].figure = new Rook(color)
     }
 }
