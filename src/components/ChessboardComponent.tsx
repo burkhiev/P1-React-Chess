@@ -1,15 +1,32 @@
+import classNames from 'classnames';
 import React, { useState } from 'react';
-import { Chessboard } from '../models/Chessboard';
+import { ChessboardFactory } from '../services/ChessboardFactory';
+import CellComponent from './CellComponent';
 
 export const ChessboardComponent = () => {
-    const [chessboard, setChessboard] = useState(new Chessboard())
-    const cells = chessboard.cells
-    const content = cells.map((x, index) => {
-        return (
-            <div key={index}>
-                {x.toString()}
+    const [chessboard, setChessboard] = useState(() => ChessboardFactory.getInitialState())
+
+    const rowClasses = classNames(
+        'row',
+        'justify-content-center'
+    )
+
+    const content = chessboard.cells.map((row, rowIndex) => {
+        const result = (
+            <div
+                key={rowIndex}
+                className={rowClasses}>
+            {
+                row.map((cell, cellIndex) => {
+                    return (
+                        <CellComponent key={cellIndex} />
+                    )
+                })
+            }
             </div>
         )
+
+        return result
     })
 
     return (

@@ -1,4 +1,4 @@
-export enum Behaviors {
+export enum FigureNames {
     Pawn,
     Rook,
     Knight,

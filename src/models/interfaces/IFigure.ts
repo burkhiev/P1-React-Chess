@@ -1,5 +1,8 @@
-import { Behaviors } from "./Behaviors";
+import { Colors } from "./Colors";
+import { FigureNames } from "./FigureNames";
 
 export interface IFigure {
-    behavior: Behaviors
+    // имя свойства name занято и выделяется как устаревшее(@types/react)
+    readonly figureName: FigureNames,
+    readonly color: Colors
 }

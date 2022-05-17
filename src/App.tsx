@@ -9,6 +9,7 @@ const classes = classnames(
     'border',
     'border-1',
     'mt-5',
+    'p-2',
     'bg-light'
 )
 
