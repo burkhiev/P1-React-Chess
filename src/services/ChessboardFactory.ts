@@ -1,5 +1,5 @@
 import { Cell } from '../models/Cell';
-import { Chessboard } from '../models/Chessboard';
+import Chessboard from '../models/Chessboard';
 import { Bishop } from '../models/figures/Bishop';
 import { King } from '../models/figures/King';
 import { Knight } from '../models/figures/Knight';
@@ -10,108 +10,108 @@ import { Colors } from '../models/enums/Colors';
 import { ICell } from '../models/interfaces/ICell';
 import { IChessboard } from '../models/interfaces/IChessboard';
 
-export class ChessboardFactory {
-    private static size: number = 8
+export default class ChessboardFactory {
+  private static size: number = 8;
 
-    /**
+  /**
      * Создает новую шахматную доску
      * @returns Новая подготовленная шахматная доска
      */
-    static getInitialState(): Chessboard {
-        const chessboard = this.getClearBoard()
+  static getNewBoard(): IChessboard {
+    const chessboard = this.getClearBoard();
 
-        this.fillWithWhiteFigures(chessboard)
-        this.fillWithBlackFigures(chessboard)
+    this.fillWithWhiteFigures(chessboard);
+    this.fillWithBlackFigures(chessboard);
 
-        return chessboard
-    }
+    return chessboard;
+  }
 
-    /**
+  /**
      * Создает чистую шахматную доску заполненную клетками
      * @returns шахматная доска
      */
-    private static getClearBoard(): Chessboard {
-        const cells: ICell[][] = new Array<Array<ICell>>()
+  private static getClearBoard(): Chessboard {
+    const cells: ICell[][] = [];
 
-        let colorCounter = 0
-        
-        for (let i = 0; i < this.size; i++) {
-            cells.push([])
+    let colorCounter = 0;
 
-            for (let j = 0; j < this.size; j++) {
-                let color = Colors.White
-                if (colorCounter % 2 === 1) {
-                    color = Colors.Black
-                }
+    for (let i = 0; i < this.size; i += 1) {
+      cells.push([]);
 
-                cells[i].push(new Cell(color))
-                colorCounter++
-            }
-
-            // меняем порядок покраски клеток
-            colorCounter++
+      for (let j = 0; j < this.size; j += 1) {
+        let color = Colors.White;
+        if (colorCounter % 2 === 1) {
+          color = Colors.Black;
         }
-        
-        return new Chessboard(cells)
+
+        cells[i].push(new Cell(color));
+        colorCounter += 1;
+      }
+
+      // меняем порядок покраски клеток
+      colorCounter += 1;
     }
 
-    /**
+    return new Chessboard(cells);
+  }
+
+  /**
      * Заполняет белыми фигурами полученную доску
      * @param {IChessboard} chessboard Заполняемая доска
      */
-    private static fillWithWhiteFigures(chessboard: IChessboard) {
-        const color = Colors.White
-        const cells = chessboard.cells
-        
-        // заполнение пешками
-        const pawnRowIndex = 6;
-        let row = cells[pawnRowIndex]
+  private static fillWithWhiteFigures(chessboard: IChessboard) {
+    const color = Colors.White;
+    const { cells } = chessboard;
 
-        for (let i = 0; i < this.size; i++) {
-            row[i].figure = new Pawn(color)
-        }
+    // заполнение пешками
+    const pawnRowIndex = 6;
+    let row = cells[pawnRowIndex];
 
-        // заполнение тяжелыми фигурами
-        const heavyRowIndex = 7
-        row = cells[heavyRowIndex]
-
-        row[0].figure = new Rook(color)
-        row[1].figure = new Knight(color)
-        row[2].figure = new Bishop(color)
-        row[3].figure = new King(color)
-        row[4].figure = new Queen(color)
-        row[5].figure = new Bishop(color)
-        row[6].figure = new Knight(color)
-        row[7].figure = new Rook(color)
+    for (let i = 0; i < this.size; i += 1) {
+      row[i].figure = new Pawn(color);
     }
 
-    /**
+    // заполнение тяжелыми фигурами
+    const heavyRowIndex = 7;
+    row = cells[heavyRowIndex];
+
+    row[0].figure = new Rook(color);
+    row[1].figure = new Knight(color);
+    row[2].figure = new Bishop(color);
+    row[3].figure = new King(color);
+    row[4].figure = new Queen(color);
+    row[5].figure = new Bishop(color);
+    row[6].figure = new Knight(color);
+    row[7].figure = new Rook(color);
+  }
+
+  /**
      * Заполняет черными фигурами полученную доску
      * @param {IChessboard} chessboard Заполняемая доска
      */
-    private static fillWithBlackFigures(chessboard: IChessboard) {
-        const color = Colors.Black
-        const cells = chessboard.cells
+  private static fillWithBlackFigures(chessboard: IChessboard) {
+    const color = Colors.Black;
+    const { cells } = chessboard;
 
-        // заполнение пешками
-        const pawnRowIndex = 1;
-        let row = cells[pawnRowIndex]
+    // заполнение пешками
+    const pawnRowIndex = 1;
+    let row = cells[pawnRowIndex];
 
-        for (let i = 0; i < this.size; i++) {
-            row[i].figure = new Pawn(color)
-        }
-
-        // заполнение тяжелыми фигурами
-        const heavyRowIndex = 0
-        row = cells[heavyRowIndex]
-
-        row[0].figure = new Rook(color)
-        row[1].figure = new Knight(color)
-        row[2].figure = new Bishop(color)
-        row[3].figure = new King(color)
-        row[4].figure = new Queen(color)
-        row[5].figure = new Bishop(color)
-        row[6].figure = new Knight(color)
-        row[7].figure = new Rook(color)
+    for (let i = 0; i < this.size; i += 1) {
+      row[i].figure = new Pawn(color);
     }
+
+    // заполнение тяжелыми фигурами
+    const heavyRowIndex = 0;
+    row = cells[heavyRowIndex];
+
+    row[0].figure = new Rook(color);
+    row[1].figure = new Knight(color);
+    row[2].figure = new Bishop(color);
+    row[3].figure = new King(color);
+    row[4].figure = new Queen(color);
+    row[5].figure = new Bishop(color);
+    row[6].figure = new Knight(color);
+    row[7].figure = new Rook(color);
+  }
 }

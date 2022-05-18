@@ -3,11 +3,12 @@ import { ICell } from './interfaces/ICell';
 import { IFigure } from './interfaces/IFigure';
 
 export class Cell implements ICell {
-    figure: IFigure | undefined;
-    color: Colors
-    
-    constructor(color: Colors, figure?: IFigure) {
-        this.color = color
-        this.figure = figure
-    }
+  figure: IFigure | undefined;
+
+  color: Colors;
+
+  constructor(color: Colors, figure?: IFigure) {
+    this.color = color;
+    this.figure = figure;
+  }
 }

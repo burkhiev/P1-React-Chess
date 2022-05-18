@@ -1,13 +1,14 @@
-import { Colors } from "../enums/Colors";
-import { FigureNames } from "../enums/FigureNames";
-import { IFigure } from "../interfaces/IFigure";
+import { Colors } from '../enums/Colors';
+import { FigureNames } from '../enums/FigureNames';
+import { IFigure } from '../interfaces/IFigure';
 
 export class Knight implements IFigure {
-    readonly figureName: FigureNames;
-    readonly color: Colors;
+  readonly figureName: FigureNames;
 
-    constructor(color: Colors) {
-        this.figureName = FigureNames.Knight
-        this.color = color
-    }
+  readonly color: Colors;
+
+  constructor(color: Colors) {
+    this.figureName = FigureNames.Knight;
+    this.color = color;
+  }
 }
