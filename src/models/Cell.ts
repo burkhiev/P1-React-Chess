@@ -2,7 +2,7 @@ import { Colors } from './enums/Colors';
 import { ICell } from './interfaces/ICell';
 import { IFigure } from './interfaces/IFigure';
 
-export class Cell implements ICell {
+export default class Cell implements ICell {
   figure: IFigure | undefined;
 
   color: Colors;

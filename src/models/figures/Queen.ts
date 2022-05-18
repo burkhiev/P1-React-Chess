@@ -2,7 +2,7 @@ import { Colors } from '../enums/Colors';
 import { FigureNames } from '../enums/FigureNames';
 import { IFigure } from '../interfaces/IFigure';
 
-export class Queen implements IFigure {
+export default class Queen implements IFigure {
   readonly figureName: FigureNames;
 
   readonly color: Colors;

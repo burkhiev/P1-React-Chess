@@ -1,11 +1,11 @@
-import { Cell } from '../models/Cell';
+import Cell from '../models/Cell';
 import Chessboard from '../models/Chessboard';
-import { Bishop } from '../models/figures/Bishop';
-import { King } from '../models/figures/King';
-import { Knight } from '../models/figures/Knight';
-import { Pawn } from '../models/figures/Pawn';
-import { Queen } from '../models/figures/Queen';
-import { Rook } from '../models/figures/Rook';
+import Bishop from '../models/figures/Bishop';
+import King from '../models/figures/King';
+import Knight from '../models/figures/Knight';
+import Pawn from '../models/figures/Pawn';
+import Queen from '../models/figures/Queen';
+import Rook from '../models/figures/Rook';
 import { Colors } from '../models/enums/Colors';
 import { ICell } from '../models/interfaces/ICell';
 import { IChessboard } from '../models/interfaces/IChessboard';
