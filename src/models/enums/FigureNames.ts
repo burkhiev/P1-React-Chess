@@ -7,10 +7,10 @@
 // Нет необходимости использовать значения enum в данном файле
 /* eslint-disable no-unused-vars */
 export enum FigureNames {
-    Pawn,
-    Rook,
-    Knight,
-    Bishop,
-    Queen,
-    King
+    Pawn = "Pawn",
+    Rook = "Rook",
+    Knight = "Knight",
+    Bishop = "Bishop",
+    Queen = "Queen",
+    King = "King"
 }

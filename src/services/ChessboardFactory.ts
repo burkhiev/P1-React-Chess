@@ -6,9 +6,8 @@ import Knight from '../models/figures/Knight';
 import Pawn from '../models/figures/Pawn';
 import Queen from '../models/figures/Queen';
 import Rook from '../models/figures/Rook';
-import { Colors } from '../models/enums/Colors';
+import { Colors } from './Colors';
 import { ICell } from '../models/interfaces/ICell';
-import { IChessboard } from '../models/interfaces/IChessboard';
 
 export default class ChessboardFactory {
   private static size: number = 8;
@@ -17,11 +16,12 @@ export default class ChessboardFactory {
      * Создает новую шахматную доску
      * @returns Новая подготовленная шахматная доска
      */
-  static getNewBoard(): IChessboard {
+  static getNewBoard(): Chessboard {
     const chessboard = this.getClearBoard();
 
     this.fillWithWhiteFigures(chessboard);
     this.fillWithBlackFigures(chessboard);
+    this.setDefaultActions(chessboard);
 
     return chessboard;
   }
@@ -44,7 +44,7 @@ export default class ChessboardFactory {
           color = Colors.Black;
         }
 
-        cells[i].push(new Cell(color));
+        cells[i].push(new Cell(color, i, j));
         colorCounter += 1;
       }
 
@@ -57,9 +57,9 @@ export default class ChessboardFactory {
 
   /**
      * Заполняет белыми фигурами полученную доску
-     * @param {IChessboard} chessboard Заполняемая доска
+     * @param {Chessboard} chessboard Заполняемая доска
      */
-  private static fillWithWhiteFigures(chessboard: IChessboard) {
+  private static fillWithWhiteFigures(chessboard: Chessboard) {
     const color = Colors.White;
     const { cells } = chessboard;
 
@@ -87,9 +87,9 @@ export default class ChessboardFactory {
 
   /**
      * Заполняет черными фигурами полученную доску
-     * @param {IChessboard} chessboard Заполняемая доска
+     * @param {Chessboard} chessboard Заполняемая доска
      */
-  private static fillWithBlackFigures(chessboard: IChessboard) {
+  private static fillWithBlackFigures(chessboard: Chessboard) {
     const color = Colors.Black;
     const { cells } = chessboard;
 
@@ -113,5 +113,19 @@ export default class ChessboardFactory {
     row[5].figure = new Bishop(color);
     row[6].figure = new Knight(color);
     row[7].figure = new Rook(color);
+  }
+
+  private static setDefaultActions(chessboard: Chessboard) {
+    const cells = chessboard.cells;
+
+    for (let i = 0; i < cells.length; i += 1) {
+      const row = cells[i];
+      
+      for (let j = 0; j < row.length; j += 1) {
+        const cell = row[j];
+
+        cell.onAction = chessboard.setDefaultCellsState;
+      }
+    }
   }
 }

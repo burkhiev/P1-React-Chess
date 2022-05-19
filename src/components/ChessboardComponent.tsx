@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { nanoid } from '@reduxjs/toolkit';
 import classNames from 'classnames';
 
-import ChessboardFactory from '../services/ChessboardFactory';
-// import Chessboard from '../models/Chessboard';
 import CellComponent from './CellComponent';
+import ChessboardFactory from '../services/ChessboardFactory';
 
 export default function ChessboardComponent() {
-  const [chessboard] = useState(() => ChessboardFactory.getNewBoard());
-
+  const [chessboard] = useState(ChessboardFactory.getNewBoard());
   const rowClasses = classNames(
-    'row',
+    'd-flex',
     'justify-content-center',
   );
 
@@ -21,9 +19,13 @@ export default function ChessboardComponent() {
         className={rowClasses}
       >
         {
-          row.map((cell) => (
-            <CellComponent key={nanoid()} cell={cell} />
-          ))
+          row.map((cell) =>
+            <CellComponent
+              key={nanoid()}
+              cell={cell}
+              selectCell={chessboard.selectCell}
+              setDefaultState={chessboard.setDefaultCellsState}
+            />)
         }
       </div>
     );
@@ -32,8 +34,8 @@ export default function ChessboardComponent() {
   });
 
   return (
-    <>
+    <div className='p-2'>
       {contentArray.map((renderedRow) => renderedRow)}
-    </>
+    </div>
   );
 }

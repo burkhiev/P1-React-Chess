@@ -29,9 +29,6 @@
                 "allow": "as-needed"
             }
         ],
-        "import/prefer-default-export": [
-            "warn"
-        ],
         "import/extensions": [
             "warn",
             {

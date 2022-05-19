@@ -1,4 +1,4 @@
-import { Colors } from '../models/enums/Colors';
+import { Colors } from './Colors';
 import { FigureNames } from '../models/enums/FigureNames';
 import { IFigure } from '../models/interfaces/IFigure';
 
