@@ -23,6 +23,9 @@
     "rules": {
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "error",
+        "no-param-reassign": "off",
+        "jsx-a11y/no-noninteractive-element-interactions": "off",
+        "class-methods-use-this": "off",
         "react/jsx-filename-extension": [
             0,
             {

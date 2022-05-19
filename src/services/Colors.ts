@@ -7,9 +7,9 @@
 // Нет необходимости использовать значения enum в данном файле
 /* eslint-disable no-unused-vars */
 export enum Colors {
-    Black = "Black",
-    White = "White",
-    Primary = "Primary",
-    Danger = "Danger",
-    Warning = "Warning"
+    Black = 'Black',
+    White = 'White',
+    Primary = 'Primary',
+    Danger = 'Danger',
+    Warning = 'Warning'
 }

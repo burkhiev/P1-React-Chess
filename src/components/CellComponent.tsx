@@ -1,13 +1,11 @@
 import classNames from 'classnames';
 import React, { ReactElement, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { CellStatus } from '../models/enums/CellStates';
 import { Colors } from '../services/Colors';
 import { ICell } from '../models/interfaces/ICell';
 import DotComponent from './DotComponent';
 import FigureComponent from './FigureComponent';
-// import { setSelectedCell, setDefaultCellsState, useChessSelector } from '../reducers/chessboardSlice'
 
 const defaultCellClasses = classNames(
   'd-flex',
@@ -15,7 +13,7 @@ const defaultCellClasses = classNames(
   'border-secondary',
   'rounded-3',
   'btn',
-  'cell'
+  'cell',
 );
 
 interface ICellColorObject {
@@ -34,13 +32,14 @@ function resetBackgroundClasses(colorObj: ICellColorObject) {
 
 interface ICellComponentProps {
   cell: ICell,
+  // eslint-disable-next-line no-unused-vars
   selectCell: (cell: ICell) => void,
   setDefaultState: () => void
 }
 
 export default function CellComponent(props: ICellComponentProps) {
   const { cell, selectCell, setDefaultState } = props;
-  
+
   const [figure, setFigure] = useState(() => cell.figure);
   const [status, setStatus] = useState(() => cell.status);
 
@@ -59,16 +58,15 @@ export default function CellComponent(props: ICellComponentProps) {
         setStatus(CellStatus.Target);
         break;
       default:
-        throw new Error("Unknown cell status");
+        throw new Error('Unknown cell status');
     }
 
     if (cell.isEmpty) {
       setFigure(undefined);
-    }
-    else {
+    } else {
       setFigure(cell.figure);
     }
-  }
+  };
 
   const onClick = () => {
     cell.onAction();
@@ -77,18 +75,18 @@ export default function CellComponent(props: ICellComponentProps) {
     if (cell.status === CellStatus.Default) {
       selectCell(cell);
     }
-  }
+  };
 
-  let bgColor: ICellColorObject = {
+  const bgColor: ICellColorObject = {
     'bg-dark': false,
     'bg-white': false,
     'bg-primary': false,
     'bg-danger': false,
-  }
+  };
 
-  const color = cell.color;
+  const { color } = cell;
   let classes = defaultCellClasses;
-  
+
   if (color === Colors.Black) {
     bgColor['bg-dark'] = true;
   } else {
@@ -98,24 +96,22 @@ export default function CellComponent(props: ICellComponentProps) {
   let content: ReactElement | undefined;
   if (figure) {
     content = <FigureComponent figure={figure} cellColor={color} />;
-    
+
     if (status === CellStatus.Active) {
       resetBackgroundClasses(bgColor);
       bgColor['bg-primary'] = true;
-    }
-    else if(status === CellStatus.Target) {
+    } else if (status === CellStatus.Target) {
       resetBackgroundClasses(bgColor);
       bgColor['bg-danger'] = true;
     }
-  }
-  else if (status === CellStatus.OnWay) {
-    content = <DotComponent />
+  } else if (status === CellStatus.OnWay) {
+    content = <DotComponent />;
   }
 
   classes = classNames(classes, bgColor);
 
   return (
-    <div className={classes} onClick={onClick} >
+    <div className={classes} onClick={onClick} onKeyDown={onClick} role="cell">
       {content}
     </div>
   );

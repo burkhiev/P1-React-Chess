@@ -1,4 +1,4 @@
-import {CellStatus} from '../enums/CellStates';
+import { CellStatus } from '../enums/CellStates';
 import { Colors } from '../../services/Colors';
 import { IFigure } from './IFigure';
 

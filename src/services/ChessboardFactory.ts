@@ -116,15 +116,11 @@ export default class ChessboardFactory {
   }
 
   private static setDefaultActions(chessboard: Chessboard) {
-    const cells = chessboard.cells;
+    const { cells } = chessboard;
 
-    for (let i = 0; i < cells.length; i += 1) {
-      const row = cells[i];
-      
-      for (let j = 0; j < row.length; j += 1) {
-        const cell = row[j];
-
-        cell.onAction = chessboard.setDefaultCellsState;
+    for (let i = 0; i < this.size; i += 1) {
+      for (let j = 0; j < this.size; j += 1) {
+        cells[i][j].onAction = chessboard.setDefaultCellsState;
       }
     }
   }

@@ -3,8 +3,8 @@ import { ICell } from './interfaces/ICell';
 
 export default class Chessboard {
   cells: ICell[][];
-  cell: ICell | undefined;
-  get size(): number { return this.cells.length }
+
+  get size(): number { return this.cells.length; }
 
   constructor(cells: ICell[][]) {
     this.cells = cells;
@@ -16,26 +16,24 @@ export default class Chessboard {
   }
 
   selectCell(cell: ICell) {
-    this.cell = cell;
-
-    if (this.cell.isEmpty) {
+    if (cell.isEmpty) {
       this.setDefaultCellsState();
       return;
     }
 
-    this.markRookSteps(this.cell);
+    this.markRookSteps(cell);
   }
 
   /**
    * Устанавливает всем клеткам состояние по умолчанию (в зависимости от наличия фигуры).
    */
   setDefaultCellsState() {
-    const cells = this.cells;
+    const { cells } = this;
 
-    for (let i = 0; i < cells.length; i++) {
+    for (let i = 0; i < cells.length; i += 1) {
       const row = cells[i];
 
-      for (let j = 0; j < row.length; j++) {
+      for (let j = 0; j < row.length; j += 1) {
         const cell = row[j];
         cell.status = CellStatus.Default;
         cell.onAction = () => { };
@@ -45,12 +43,11 @@ export default class Chessboard {
   }
 
   /**
-   * Отмечает доступные для Ладьи клетки.
-   * @param cell Клетка, из которой Ладья ищет доступные ходы.
+   * Отмечает доступные по вертикали и горизонтали клетки.
+   * @param cell Клетка, из которой ищем ходы.
    */
   private markRookSteps(cell: ICell) {
-    const size = this.size;
-    const cells = this.cells;
+    const { size, cells } = this;
     const { row, col } = cell;
 
     cell.status = CellStatus.Active;
@@ -125,8 +122,7 @@ export default class Chessboard {
   private setOnMoveAction(from: ICell, to: ICell) {
     if (to.figure) {
       to.status = CellStatus.Target;
-    }
-    else {
+    } else {
       to.status = CellStatus.OnWay;
     }
     to.updateCellComponentStates();
@@ -134,9 +130,8 @@ export default class Chessboard {
     to.onAction = () => {
       to.figure = from.figure;
       from.figure = undefined;
-      
       to.updateCellComponentStates();
       from.updateCellComponentStates();
-    }
+    };
   }
 }

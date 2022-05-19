@@ -11,7 +11,7 @@ interface IFigureComponentProps {
 export default function FigureComponent(props: IFigureComponentProps) {
   const { figure, cellColor } = props;
 
-  let strFigure = undefined;
+  let strFigure;
   let strColor = '';
 
   if (figure) {

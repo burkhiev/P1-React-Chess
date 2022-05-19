@@ -19,13 +19,14 @@ export default function ChessboardComponent() {
         className={rowClasses}
       >
         {
-          row.map((cell) =>
+          row.map((cell) => (
             <CellComponent
               key={nanoid()}
               cell={cell}
               selectCell={chessboard.selectCell}
               setDefaultState={chessboard.setDefaultCellsState}
-            />)
+            />
+          ))
         }
       </div>
     );
@@ -34,7 +35,7 @@ export default function ChessboardComponent() {
   });
 
   return (
-    <div className='p-2'>
+    <div className="p-2">
       {contentArray.map((renderedRow) => renderedRow)}
     </div>
   );

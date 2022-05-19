@@ -4,6 +4,7 @@ import { IFigure } from '../interfaces/IFigure';
 
 export default class Bishop implements IFigure {
   readonly figureName: FigureNames;
+
   readonly color: Colors;
 
   constructor(color: Colors) {
