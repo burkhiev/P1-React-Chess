@@ -23,15 +23,29 @@
     "rules": {
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "error",
+
+        // В коде присутствуют методы специально
+        // созданные для изменения параметра.
         "no-param-reassign": "off",
-        "jsx-a11y/no-noninteractive-element-interactions": "off",
+
+        // Отключение обязательного указания ключевого слова static
+        // для методов, в которых отсутствует обращение instance членам.
         "class-methods-use-this": "off",
+
+        // Позволить устанавливать слушатели событий для неинтерактивных элементов.
+        // Отключение используется для установки слушателя на <div> элемент(Клетка доски).
+        "jsx-a11y/no-noninteractive-element-interactions": "off",
+
+        // Позволить использовать синтаксис jsx в .tsx файлах.
         "react/jsx-filename-extension": [
             0,
             {
                 "allow": "as-needed"
             }
         ],
+
+        // Разрешение конфликта eslint и tsc.
+        // При импорте модулей eslint требует .tsx, а tsc не позволяет поставить .tsx
         "import/extensions": [
             "warn",
             {
@@ -40,7 +54,7 @@
         ]
     },
     "ignorePatterns":[
-        "/*.js",
+        "/*.js", // webpack.config.js
         "/dist"
     ],
     "settings": {

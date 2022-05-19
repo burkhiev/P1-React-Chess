@@ -21,7 +21,6 @@ export default class ChessboardFactory {
 
     this.fillWithWhiteFigures(chessboard);
     this.fillWithBlackFigures(chessboard);
-    this.setDefaultActions(chessboard);
 
     return chessboard;
   }
@@ -113,16 +112,5 @@ export default class ChessboardFactory {
     row[5].figure = new Bishop(color);
     row[6].figure = new Knight(color);
     row[7].figure = new Rook(color);
-  }
-
-  private static setDefaultActions(chessboard: Chessboard) {
-    const { cells } = chessboard;
-
-    for (let i = 0; i < this.size; i += 1) {
-      for (let j = 0; j < this.size; j += 1) {
-        const cell = cells[i][j];
-        cell.onAction = () => { };
-      }
-    }
   }
 }

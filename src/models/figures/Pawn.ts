@@ -7,8 +7,11 @@ export default class Pawn implements IFigure {
 
   readonly color: Colors;
 
+  moved: boolean;
+
   constructor(color: Colors) {
     this.figureName = FigureNames.Pawn;
     this.color = color;
+    this.moved = false;
   }
 }
