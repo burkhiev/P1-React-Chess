@@ -4,7 +4,9 @@ import { ICell } from './interfaces/ICell';
 export default class Chessboard {
   cells: ICell[][];
 
-  get size(): number { return this.cells.length; }
+  private selected: boolean = false;
+
+  private get size(): number { return this.cells.length; }
 
   constructor(cells: ICell[][]) {
     this.cells = cells;
@@ -15,19 +17,40 @@ export default class Chessboard {
     this.setOnMoveAction = this.setOnMoveAction.bind(this);
   }
 
-  selectCell(cell: ICell) {
-    if (cell.isEmpty) {
-      this.setDefaultCellsState();
-      return;
-    }
+  onAction(cell: ICell) {
+    if (this.selected) {
+      if (cell.status === CellStatus.OnWay || cell.status === CellStatus.Target) {
+        cell.onAction();
+      }
 
+      this.selected = false;
+      this.setDefaultCellsState();
+      this.updateAllCellComponentsStates();
+    } else if (!cell.isEmpty && cell.status === CellStatus.Default) {
+      this.selected = true;
+      this.selectCell(cell);
+      this.updateAllCellComponentsStates();
+    }
+  }
+
+  private updateAllCellComponentsStates() {
+    for (let i = 0; i < this.cells.length; i += 1) {
+      const row = this.cells[i];
+      for (let j = 0; j < row.length; j += 1) {
+        const cell = row[j];
+        cell.updateCellComponentStates();
+      }
+    }
+  }
+
+  private selectCell(cell: ICell) {
     this.markRookSteps(cell);
   }
 
   /**
    * Устанавливает всем клеткам состояние по умолчанию (в зависимости от наличия фигуры).
    */
-  setDefaultCellsState() {
+  private setDefaultCellsState() {
     const { cells } = this;
 
     for (let i = 0; i < cells.length; i += 1) {
@@ -37,7 +60,6 @@ export default class Chessboard {
         const cell = row[j];
         cell.status = CellStatus.Default;
         cell.onAction = () => { };
-        cell.updateCellComponentStates();
       }
     }
   }
@@ -125,13 +147,10 @@ export default class Chessboard {
     } else {
       to.status = CellStatus.OnWay;
     }
-    to.updateCellComponentStates();
 
     to.onAction = () => {
       to.figure = from.figure;
       from.figure = undefined;
-      to.updateCellComponentStates();
-      from.updateCellComponentStates();
     };
   }
 }

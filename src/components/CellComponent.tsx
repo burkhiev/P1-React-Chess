@@ -31,14 +31,13 @@ function resetBackgroundClasses(colorObj: ICellColorObject) {
 }
 
 interface ICellComponentProps {
-  cell: ICell,
+  cell: ICell;
   // eslint-disable-next-line no-unused-vars
-  selectCell: (cell: ICell) => void,
-  setDefaultState: () => void
+  onSelect: () => void;
 }
 
 export default function CellComponent(props: ICellComponentProps) {
-  const { cell, selectCell, setDefaultState } = props;
+  const { cell, onSelect } = props;
 
   const [figure, setFigure] = useState(() => cell.figure);
   const [status, setStatus] = useState(() => cell.status);
@@ -68,14 +67,7 @@ export default function CellComponent(props: ICellComponentProps) {
     }
   };
 
-  const onClick = () => {
-    cell.onAction();
-    setDefaultState();
-
-    if (cell.status === CellStatus.Default) {
-      selectCell(cell);
-    }
-  };
+  const onClick = onSelect;
 
   const bgColor: ICellColorObject = {
     'bg-dark': false,

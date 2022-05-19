@@ -120,7 +120,8 @@ export default class ChessboardFactory {
 
     for (let i = 0; i < this.size; i += 1) {
       for (let j = 0; j < this.size; j += 1) {
-        cells[i][j].onAction = chessboard.setDefaultCellsState;
+        const cell = cells[i][j];
+        cell.onAction = () => { };
       }
     }
   }

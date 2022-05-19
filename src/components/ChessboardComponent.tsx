@@ -23,8 +23,7 @@ export default function ChessboardComponent() {
             <CellComponent
               key={nanoid()}
               cell={cell}
-              selectCell={chessboard.selectCell}
-              setDefaultState={chessboard.setDefaultCellsState}
+              onSelect={() => chessboard.onAction(cell)}
             />
           ))
         }
