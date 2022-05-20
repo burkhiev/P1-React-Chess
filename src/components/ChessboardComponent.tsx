@@ -8,7 +8,7 @@ import ChessboardFactory from '../services/ChessboardFactory';
 export default function ChessboardComponent() {
   const [chessboard] = useState(ChessboardFactory.getNewBoard());
   const rowClasses = classNames(
-    'd-flex',
+    'row',
     'justify-content-center',
   );
 
@@ -24,6 +24,7 @@ export default function ChessboardComponent() {
               key={nanoid()}
               cell={cell}
               onSelect={() => chessboard.onAction(cell)}
+              currentStep={chessboard.currentStep}
             />
           ))
         }

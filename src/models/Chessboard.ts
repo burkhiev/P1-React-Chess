@@ -1,15 +1,20 @@
 import { Colors } from '../services/Colors';
 import { CellStatus } from './enums/CellStates';
 import { FigureNames } from './enums/FigureNames';
-import Pawn from './figures/Pawn';
 import { ICell } from './interfaces/ICell';
+import { ICurrentStep } from './interfaces/ICurrentStep';
+import Pawn from './figures/Pawn';
 
 export default class Chessboard {
   cells: ICell[][];
 
   private selected: boolean = false;
 
+  private lastSelectedCell: ICell | undefined;
+
   private get size(): number { return this.cells.length; }
+
+  currentStep: ICurrentStep = { color: Colors.White };
 
   constructor(cells: ICell[][]) {
     this.cells = cells;
@@ -18,7 +23,7 @@ export default class Chessboard {
     this.setDefaultCellsState = this.setDefaultCellsState.bind(this);
     this.onAction = this.onAction.bind(this);
     this.setOnMoveAction = this.setOnMoveAction.bind(this);
-    this.defaultAction = this.defaultAction.bind(this);
+    this.cancelSelect = this.cancelSelect.bind(this);
 
     this.markVerticalAndHorizontalSteps = this.markVerticalAndHorizontalSteps.bind(this);
     this.markDiagonalSteps = this.markDiagonalSteps.bind(this);
@@ -26,38 +31,58 @@ export default class Chessboard {
     this.markKingSteps = this.markKingSteps.bind(this);
     this.markPawnSteps = this.markPawnSteps.bind(this);
 
-    // Для отмены фокуса, при нажатии за пределами доски.
-    this.resetSelection = this.resetSelection.bind(this);
-
+    // Установка стандартного состояния для клеток доски
     this.setDefaultCellsState();
   }
 
   /**
-   * Запускает поведение клеток, при нажатии на них.
+   * (ВХОДНАЯ ТОЧКА В Chessboard)
+   * Изменяет поведение клеток, в зависимости от различных условий.
    * @param cell Клетка, которая является инициатором действия.
    */
   onAction(cell: ICell) {
+    // Случай, когда клетка уже выбрана
     if (this.selected) {
-      if (cell.status === CellStatus.OnWay || cell.status === CellStatus.Target) {
-        cell.onAction();
+      switch (cell.status) {
+        case CellStatus.Default: {
+          this.setDefaultCellsState();
+          const prevCell = this.lastSelectedCell;
+
+          // Если следующей клеткой является союзник, переключаемся на него
+          if (prevCell && this.isTeammates(prevCell, cell) && prevCell !== cell) {
+            this.selectCell(cell);
+            // Иначе отменяем выбор
+          } else {
+            this.cancelSelect();
+          }
+          break;
+        }
+
+        // Если нажали на ту же клетку, отменяем выбор
+        case CellStatus.Active:
+          this.cancelSelect();
+          break;
+
+        // Если игрок решил сделать ход, выполняем действие
+        case CellStatus.OnWay:
+        case CellStatus.Target:
+          cell.onAction();
+          this.cancelSelect();
+          break;
+
+        default:
+          throw new Error('Unknown CellStatus value');
       }
+    } else {
+      // Выбор клетки с фигурой
+      const isCellEnable = !cell.isEmpty
+        && cell.status === CellStatus.Default
+        && cell.figure?.color === this.currentStep.color;
 
-      this.selected = false;
-      this.setDefaultCellsState();
-      this.updateAllCellComponentsStates();
-    } else if (!cell.isEmpty && cell.status === CellStatus.Default) {
-      this.selected = true;
-      this.selectCell(cell);
-      this.updateAllCellComponentsStates();
+      if (isCellEnable) {
+        this.selectCell(cell);
+      }
     }
-  }
-
-  /**
-   * Сбрасывает все активные действия с доски в значения по умолчанию.
-   */
-  resetSelection() {
-    this.setDefaultCellsState();
-    this.updateAllCellComponentsStates();
   }
 
   /**
@@ -72,7 +97,7 @@ export default class Chessboard {
       for (let j = 0; j < row.length; j += 1) {
         const cell = row[j];
         cell.status = CellStatus.Default;
-        cell.onAction = () => this.defaultAction(cell);
+        cell.onAction = () => { };
       }
     }
   }
@@ -81,9 +106,11 @@ export default class Chessboard {
    * Запускает обновление визуальной части клеток.
    */
   private updateAllCellComponentsStates() {
-    for (let i = 0; i < this.cells.length; i += 1) {
-      const row = this.cells[i];
-      for (let j = 0; j < row.length; j += 1) {
+    const { cells, size } = this;
+
+    for (let i = 0; i < size; i += 1) {
+      const row = cells[i];
+      for (let j = 0; j < size; j += 1) {
         const cell = row[j];
         cell.updateCellComponentStates();
       }
@@ -91,7 +118,7 @@ export default class Chessboard {
   }
 
   /**
-   * Устанавливает необходимые действия для клетки, при перемещении фигуры.
+   * Выполняет необходимые действия для клетки, при перемещении фигуры.
    * @param from Клетка, из которой движется фигура.
    * @param to Клетка, в которую фигура движется.
    */
@@ -107,20 +134,25 @@ export default class Chessboard {
     }
 
     to.onAction = () => {
-      this.defaultAction(from);
-
       to.figure = from.figure;
       from.figure = undefined;
+
+      this.switchColor();
+
+      if (to.figure?.figureName === FigureNames.Pawn) {
+        (<Pawn>to.figure).moved = true;
+      }
     };
   }
 
   /**
-   * Действие по умолчанию
-   * @param cell Клетка
+   * Переключает цвет текущего игрока.
    */
-  defaultAction(cell: ICell) {
-    if (cell.figure?.figureName === FigureNames.Pawn) {
-      (<Pawn>cell.figure).moved = true;
+  private switchColor() {
+    if (this.currentStep.color === Colors.White) {
+      this.currentStep.color = Colors.Black;
+    } else {
+      this.currentStep.color = Colors.White;
     }
   }
 
@@ -148,10 +180,14 @@ export default class Chessboard {
   }
 
   /**
-   * Запускает поведение при выборе клетки, которая находится в нейтральном состоянии.
+   * Запускает действия при выборе клетки, которая находится в нейтральном состоянии.
    * @param cell Выбираемая клетка
    */
   private selectCell(cell: ICell) {
+    if (cell.status !== CellStatus.Default) {
+      throw new Error('cell.status must be CellStatus.Default');
+    }
+
     cell.status = CellStatus.Active;
 
     switch (cell.figure?.figureName) {
@@ -177,6 +213,19 @@ export default class Chessboard {
       default:
         throw new Error('Unknown FigureName');
     }
+
+    this.selected = true;
+    this.lastSelectedCell = cell;
+    this.updateAllCellComponentsStates();
+  }
+
+  /**
+   * Отменяет выбор клетки
+   */
+  private cancelSelect() {
+    this.selected = false;
+    this.setDefaultCellsState();
+    this.updateAllCellComponentsStates();
   }
 
   /**

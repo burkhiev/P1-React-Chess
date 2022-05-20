@@ -59,7 +59,6 @@ export default class ChessboardFactory {
      * @param {Chessboard} chessboard Заполняемая доска
      */
   private static fillWithWhiteFigures(chessboard: Chessboard) {
-    const color = Colors.White;
     const { cells } = chessboard;
 
     // заполнение пешками
@@ -67,21 +66,21 @@ export default class ChessboardFactory {
     let row = cells[pawnRowIndex];
 
     for (let i = 0; i < this.size; i += 1) {
-      row[i].figure = new Pawn(color);
+      row[i].figure = new Pawn(Colors.White);
     }
 
     // заполнение тяжелыми фигурами
     const heavyRowIndex = 7;
     row = cells[heavyRowIndex];
 
-    row[0].figure = new Rook(color);
-    row[1].figure = new Knight(color);
-    row[2].figure = new Bishop(color);
-    row[3].figure = new King(color);
-    row[4].figure = new Queen(color);
-    row[5].figure = new Bishop(color);
-    row[6].figure = new Knight(color);
-    row[7].figure = new Rook(color);
+    row[0].figure = new Rook(Colors.White);
+    row[1].figure = new Knight(Colors.White);
+    row[2].figure = new Bishop(Colors.White);
+    row[3].figure = new King(Colors.White);
+    row[4].figure = new Queen(Colors.White);
+    row[5].figure = new Bishop(Colors.White);
+    row[6].figure = new Knight(Colors.White);
+    row[7].figure = new Rook(Colors.White);
   }
 
   /**
@@ -89,7 +88,6 @@ export default class ChessboardFactory {
      * @param {Chessboard} chessboard Заполняемая доска
      */
   private static fillWithBlackFigures(chessboard: Chessboard) {
-    const color = Colors.Black;
     const { cells } = chessboard;
 
     // заполнение пешками
@@ -97,20 +95,20 @@ export default class ChessboardFactory {
     let row = cells[pawnRowIndex];
 
     for (let i = 0; i < this.size; i += 1) {
-      row[i].figure = new Pawn(color);
+      row[i].figure = new Pawn(Colors.Black);
     }
 
     // заполнение тяжелыми фигурами
     const heavyRowIndex = 0;
     row = cells[heavyRowIndex];
 
-    row[0].figure = new Rook(color);
-    row[1].figure = new Knight(color);
-    row[2].figure = new Bishop(color);
-    row[3].figure = new King(color);
-    row[4].figure = new Queen(color);
-    row[5].figure = new Bishop(color);
-    row[6].figure = new Knight(color);
-    row[7].figure = new Rook(color);
+    row[0].figure = new Rook(Colors.Black);
+    row[1].figure = new Knight(Colors.Black);
+    row[2].figure = new Bishop(Colors.Black);
+    row[3].figure = new King(Colors.Black);
+    row[4].figure = new Queen(Colors.Black);
+    row[5].figure = new Bishop(Colors.Black);
+    row[6].figure = new Knight(Colors.Black);
+    row[7].figure = new Rook(Colors.Black);
   }
 }

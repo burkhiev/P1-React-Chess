@@ -1,8 +1,10 @@
 import React from 'react';
 import classnames from 'classnames';
+import { Provider } from 'react-redux';
 
-import ErrorBoundary from './services/ErrorBoundary';
+import ErrorBoundary from './components/ErrorBoundary';
 import ChessboardComponent from './components/ChessboardComponent';
+import store from './store';
 
 const classes = classnames(
   'container',
@@ -16,9 +18,11 @@ const classes = classnames(
 export default function App() {
   return (
     <ErrorBoundary>
-      <div className={classes}>
-        <ChessboardComponent />
-      </div>
+      <Provider store={store}>
+        <div className={classes}>
+          <ChessboardComponent />
+        </div>
+      </Provider>
     </ErrorBoundary>
   );
 }
