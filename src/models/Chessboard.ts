@@ -1,43 +1,61 @@
-import { Colors } from '../services/Colors';
-import { CellStatus } from './enums/CellStates';
-import { FigureNames } from './enums/FigureNames';
+import { Colors } from '../services/enums/Colors';
+import { CellStatus } from '../services/enums/CellStates';
+import { FigureNames } from '../services/enums/FigureNames';
 import { ICell } from './interfaces/ICell';
-import { ICurrentStep } from './interfaces/ICurrentStep';
-import Pawn from './figures/Pawn';
+import { ChessProcessPredicate } from '../globals';
+import { ChessGameStates } from '../services/enums/ChessGameStates';
+import ChessMovesManager from '../services/ChessMovesManager';
+import IChessGameInfo from './interfaces/IChessGameInfo';
 
 export default class Chessboard {
-  cells: ICell[][];
+  /** Указывает, выбрана ли фигура в данный момент. */
+  private selected: boolean;
 
-  private selected: boolean = false;
-
+  /** Хранит в себе последнюю выбранную клетку. */
   private lastSelectedCell: ICell | undefined;
 
-  private get size(): number { return this.cells.length; }
+  private movesManager: ChessMovesManager;
 
-  currentStep: ICurrentStep = { color: Colors.White };
+  /** Все клетки доски в виде матрицы */
+  cells: ICell[][];
+
+  /** Размер стороны доски. Предполагается, что доска квадратная. */
+  get size(): number { return this.cells.length; }
+
+  /** Хранит информацию о текущем шаге. */
+  gameInfo: IChessGameInfo;
+
+  /** Предназначен для изменения визуальной части при смене игрока. */
+  onSwitchPlayerCallback = () => { };
+
+  /** Предназначен для изменения визуальной части при окончании игры. */
+  onGameEndCallback = () => { };
 
   constructor(cells: ICell[][]) {
     this.cells = cells;
 
     this.selectCell = this.selectCell.bind(this);
+    this.cancelSelect = this.cancelSelect.bind(this);
     this.setDefaultCellsState = this.setDefaultCellsState.bind(this);
     this.onAction = this.onAction.bind(this);
-    this.setOnMoveAction = this.setOnMoveAction.bind(this);
-    this.cancelSelect = this.cancelSelect.bind(this);
 
-    this.markVerticalAndHorizontalSteps = this.markVerticalAndHorizontalSteps.bind(this);
-    this.markDiagonalSteps = this.markDiagonalSteps.bind(this);
-    this.markKnightSteps = this.markKnightSteps.bind(this);
-    this.markKingSteps = this.markKingSteps.bind(this);
-    this.markPawnSteps = this.markPawnSteps.bind(this);
+    this.getNextGameState = this.getNextGameState.bind(this);
+    this.switchPlayer = this.switchPlayer.bind(this);
 
     // Установка стандартного состояния для клеток доски
     this.setDefaultCellsState();
+
+    this.selected = false;
+    this.movesManager = new ChessMovesManager(this);
+    this.gameInfo = {
+      currentTeamColor: Colors.White,
+      gameState: ChessGameStates.InProcess,
+    };
   }
 
   /**
-   * (ВХОДНАЯ ТОЧКА В Chessboard)
    * Изменяет поведение клеток, в зависимости от различных условий.
+   * Данный метод служит в качестве onClick callback для React компонентов клеток.
    * @param cell Клетка, которая является инициатором действия.
    */
   onAction(cell: ICell) {
@@ -48,8 +66,11 @@ export default class Chessboard {
           this.setDefaultCellsState();
           const prevCell = this.lastSelectedCell;
 
-          // Если следующей клеткой является союзник, переключаемся на него
-          if (prevCell && this.isTeammates(prevCell, cell) && prevCell !== cell) {
+          // Если следующей клеткой является союзник
+          // и если не шах, то переключаемся на него
+          if (this.gameInfo.gameState !== ChessGameStates.Check
+            && prevCell
+            && this.movesManager.isTeammates(prevCell, cell)) {
             this.selectCell(cell);
             // Иначе отменяем выбор
           } else {
@@ -74,15 +95,27 @@ export default class Chessboard {
           throw new Error('Unknown CellStatus value');
       }
     } else {
-      // Выбор клетки с фигурой
-      const isCellEnable = !cell.isEmpty
-        && cell.status === CellStatus.Default
-        && cell.figure?.color === this.currentStep.color;
+      // Определяем доступность действий в зависимости от ситуации
+      const { gameState } = this.gameInfo;
 
-      if (isCellEnable) {
-        this.selectCell(cell);
+      const isCurrentTeamCell = !cell.isEmpty
+        && cell.status === CellStatus.Default
+        && cell.figure?.color === this.gameInfo.currentTeamColor;
+
+      if (isCurrentTeamCell) {
+        if (gameState === ChessGameStates.Default
+          || gameState === ChessGameStates.InProcess) {
+          this.selectCell(cell);
+        }
+
+        if (gameState === ChessGameStates.Check
+          && cell.figure?.figureName === FigureNames.King) {
+          this.selectCell(cell);
+        }
       }
     }
+
+    this.updateAllCellComponentsStates();
   }
 
   /**
@@ -118,65 +151,68 @@ export default class Chessboard {
   }
 
   /**
-   * Выполняет необходимые действия для клетки, при перемещении фигуры.
-   * @param from Клетка, из которой движется фигура.
-   * @param to Клетка, в которую фигура движется.
-   */
-  private setOnMoveAction(from: ICell, to: ICell) {
-    if (this.isTeammates(from, to)) {
-      throw new Error('You cannot go to an friendly occupied cell.');
-    }
-
-    if (to.figure) {
-      to.status = CellStatus.Target;
-    } else {
-      to.status = CellStatus.OnWay;
-    }
-
-    to.onAction = () => {
-      to.figure = from.figure;
-      from.figure = undefined;
-
-      this.switchColor();
-
-      if (to.figure?.figureName === FigureNames.Pawn) {
-        (<Pawn>to.figure).moved = true;
-      }
-    };
-  }
-
-  /**
    * Переключает цвет текущего игрока.
    */
-  private switchColor() {
-    if (this.currentStep.color === Colors.White) {
-      this.currentStep.color = Colors.Black;
+  private switchPlayer() {
+    if (this.gameInfo.currentTeamColor === Colors.White) {
+      this.gameInfo.currentTeamColor = Colors.Black;
     } else {
-      this.currentStep.color = Colors.White;
+      this.gameInfo.currentTeamColor = Colors.White;
+    }
+
+    this.gameInfo.gameState = this.getNextGameState(this.gameInfo.currentTeamColor);
+
+    if (this.gameInfo.gameState === ChessGameStates.Mate
+      || this.gameInfo.gameState === ChessGameStates.Checkmate) {
+      this.setDefaultCellsState();
+      this.onGameEndCallback();
+    } else {
+      this.onSwitchPlayerCallback();
     }
   }
 
-  // Используется для пешек
   /**
-   * Определяет враждебность клеток, в зависимости от находящихся на них фигур.
-   * @param from Первая клетка
-   * @param to Вторая клетка
-   * @returns Если на клетках стоят фигуры из противоположных команд,
-   * то возвращает true. Иначе - false.
+   * Проверяет проигрышный статус указанного цвета.
+   * @param teamColor Цвет проверяемой команды.
+   * @returns Возвращает значение перечисления ChessGameStates.
+   * Если шах тогда возвращает ChessGameStates.Check.
+   * Если мат - ChessGameStates.Mate.
+   * Если шах и мат - ChessGameStates.Checkmate.
+   * Иначе - ChessGameStates.InProcess.
    */
-  private isEnemies(first: ICell, second: ICell) {
-    return first.figure && second.figure && first.figure.color !== second.figure.color;
-  }
+  private getNextGameState(teamColor: Colors): ChessGameStates {
+    const { cells } = this;
+    const kingCell = this.movesManager.findKingCell(teamColor);
+    const enemyColor = kingCell.figure?.color === Colors.White ? Colors.Black : Colors.White;
 
-  /**
-   * Определяет дружелюбность клеток, в зависимости от находящихся на них фигур.
-   * @param from Первая клетка
-   * @param to Вторая клетка
-   * @returns Если на клетках стоят фигуры из одной команды,
-   * то возвращает true. Иначе - false.
-   */
-  private isTeammates(first: ICell, second: ICell) {
-    return (first.figure && second.figure && first.figure.color === second.figure.color);
+    // Должен ли король убегать?
+    const kingMustMove = this.movesManager.doEnemyReachesSpecialCell(kingCell, enemyColor);
+
+    // Сначала проверка на шах/мат
+    if (kingMustMove) {
+      const canMove = this.movesManager.canMoveFromCell(kingCell);
+      if (canMove) {
+        return ChessGameStates.Check; // Шах
+      }
+      return ChessGameStates.Checkmate; // Шах и мат
+    }
+
+    // Если король не в опасности проверяем
+    // возможность игрока совершить любой ход
+    for (let i = 0; i < cells.length; i += 1) {
+      const row = cells[i];
+      for (let j = 0; j < row.length; j += 1) {
+        const cell = row[j];
+
+        if (cell.figure?.color === teamColor) {
+          if (this.movesManager.canMoveFromCell(cell)) {
+            return ChessGameStates.InProcess; // Игра не закончена
+          }
+        }
+      }
+    }
+
+    return ChessGameStates.Mate; // Мат
   }
 
   /**
@@ -188,27 +224,47 @@ export default class Chessboard {
       throw new Error('cell.status must be CellStatus.Default');
     }
 
+    if (!cell.figure) {
+      throw new Error('Cell must has a figure.');
+    }
+
     cell.status = CellStatus.Active;
 
-    switch (cell.figure?.figureName) {
+    // Данная ф-я устанавливает на клетки обработчики
+    // для перемещения фигур
+    const process: ChessProcessPredicate = (current: ICell, next: ICell) => {
+      const options = {
+        postMoveAction: () => {
+          this.switchPlayer();
+          this.updateAllCellComponentsStates();
+        },
+      };
+
+      this.movesManager.setOnMoveAction(current, next, options);
+
+      return true; // указываем, что процесс не будет прерываться
+    };
+
+    const enemyColor = cell.figure.color === Colors.Black ? Colors.White : Colors.Black;
+
+    switch (cell.figure.figureName) {
       case FigureNames.Rook:
-        this.markVerticalAndHorizontalSteps(cell);
+        this.movesManager.processRookSteps(cell, enemyColor, process);
         break;
       case FigureNames.Knight:
-        this.markKnightSteps(cell);
+        this.movesManager.processKnightSteps(cell, enemyColor, process);
         break;
       case FigureNames.Bishop:
-        this.markDiagonalSteps(cell);
+        this.movesManager.processBishopSteps(cell, enemyColor, process);
         break;
       case FigureNames.Queen:
-        this.markVerticalAndHorizontalSteps(cell);
-        this.markDiagonalSteps(cell);
+        this.movesManager.processQueenSteps(cell, enemyColor, process);
         break;
       case FigureNames.King:
-        this.markKingSteps(cell);
+        this.movesManager.processKingSteps(cell, enemyColor, process);
         break;
       case FigureNames.Pawn:
-        this.markPawnSteps(cell);
+        this.movesManager.processPawnSteps(cell, enemyColor, process);
         break;
       default:
         throw new Error('Unknown FigureName');
@@ -216,7 +272,6 @@ export default class Chessboard {
 
     this.selected = true;
     this.lastSelectedCell = cell;
-    this.updateAllCellComponentsStates();
   }
 
   /**
@@ -225,197 +280,5 @@ export default class Chessboard {
   private cancelSelect() {
     this.selected = false;
     this.setDefaultCellsState();
-    this.updateAllCellComponentsStates();
-  }
-
-  /**
-   * Отмечает доступные по вертикали и горизонтали клетки.
-   * @param cell Клетка, из которой ищем ходы.
-   */
-  private markVerticalAndHorizontalSteps(cell: ICell) {
-    const { size, cells } = this;
-    const { row, col } = cell;
-
-    const isDirValid = (q: number) => q >= 0 && q < size;
-    const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-
-    for (let d = 0; d < directions.length; d += 1) {
-      const [rowD, colD] = directions[d];
-
-      let nextRow = row + rowD;
-      let nextCol = col + colD;
-
-      while (isDirValid(nextRow) && isDirValid(nextCol)) {
-        const nextCell = cells[nextRow][nextCol];
-
-        if (!this.isTeammates(cell, nextCell)) {
-          this.setOnMoveAction(cell, nextCell);
-        }
-
-        if (nextCell.figure) {
-          break;
-        }
-
-        nextRow += rowD;
-        nextCol += colD;
-      }
-    }
-  }
-
-  /**
-   * Отмечает доступные по диагонали клетки.
-   * @param cell Клетка, из которой ищем ходы.
-   */
-  private markDiagonalSteps(cell: ICell) {
-    const { size, cells } = this;
-    const { row, col } = cell;
-
-    const isDirValid = (q: number) => q >= 0 && q < size;
-    const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
-
-    for (let d = 0; d < directions.length; d += 1) {
-      const [rowD, colD] = directions[d];
-
-      let nextRow = row + rowD;
-      let nextCol = col + colD;
-
-      while (isDirValid(nextRow) && isDirValid(nextCol)) {
-        const nextCell = cells[nextRow][nextCol];
-
-        if (!this.isTeammates(cell, nextCell)) {
-          this.setOnMoveAction(cell, nextCell);
-        }
-
-        if (nextCell.figure) {
-          break;
-        }
-
-        nextRow += rowD;
-        nextCol += colD;
-      }
-    }
-  }
-
-  /**
-   * Отмечает доступные для Коня клетки.
-   * @param cell Клетка, из которой ищем ходы.
-   */
-  private markKnightSteps(cell: ICell) {
-    const { size, cells } = this;
-    const { row, col } = cell;
-
-    const directions = [[2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]];
-    const isDirValid = (q: number) => q >= 0 && q < size;
-
-    for (let d = 0; d < directions.length; d += 1) {
-      const [rowD, colD] = directions[d];
-
-      const nextRow = row + rowD;
-      const nextCol = col + colD;
-
-      if (isDirValid(nextRow) && isDirValid(nextCol)) {
-        const nextCell = cells[nextRow][nextCol];
-
-        if (!this.isTeammates(cell, nextCell)) {
-          this.setOnMoveAction(cell, nextCell);
-        }
-      }
-    }
-  }
-
-  /**
-   * Отмечает доступные для Короля клетки.
-   * @param cell Клетка, из которой ищем ходы.
-   */
-  private markKingSteps(cell: ICell) {
-    const { size, cells } = this;
-    const { row, col } = cell;
-
-    const directions = [
-      [1, 1], [1, 0], [1, -1],
-      [0, 1], [0, 0], [0, -1],
-      [-1, 1], [-1, 0], [-1, -1],
-    ];
-    const isDirValid = (q: number) => q >= 0 && q < size;
-
-    for (let d = 0; d < directions.length; d += 1) {
-      const [rowD, colD] = directions[d];
-
-      const nextRow = row + rowD;
-      const nextCol = col + colD;
-
-      if (isDirValid(nextRow) && isDirValid(nextCol)) {
-        const nextCell = cells[nextRow][nextCol];
-        if (!this.isTeammates(cell, nextCell)) {
-          this.setOnMoveAction(cell, nextCell);
-        }
-      }
-    }
-  }
-
-  /**
-   * Отмечает доступные для Пешки клетки.
-   * @param cell Клетка, из которой ищем ходы.
-   */
-  private markPawnSteps(cell: ICell) {
-    const isNotPawn = !(cell.figure && cell.figure.figureName === FigureNames.Pawn);
-    if (isNotPawn) {
-      return;
-    }
-
-    const { size, cells } = this;
-    const { row, col } = cell;
-    const { color, moved } = (<Pawn>cell.figure)!;
-
-    let nextRow = row + (color === Colors.White ? -1 : 1);
-    let nextCol = col;
-
-    const isDirValid = (q: number) => q >= 0 && q < size;
-
-    if (isDirValid(nextRow) && isDirValid(nextCol)) {
-      let nextCell = cells[nextRow][nextCol];
-
-      if (nextCell.isEmpty) {
-        this.setOnMoveAction(cell, nextCell);
-      }
-
-      // если пешка не ходила и перед ней никого нет,
-      // то есть возможность перешагнуть клетку.
-      if (!moved && nextCell.isEmpty) {
-        nextRow = row + (color === Colors.White ? -2 : 2);
-        nextCol = col;
-
-        // без проверки. если пешка не ходила, значит мы в начальной позиции.
-        nextCell = cells[nextRow][nextCol];
-
-        if (nextCell.isEmpty) {
-          this.setOnMoveAction(cell, nextCell);
-        }
-      }
-    }
-
-    // смотрим противника слева
-    nextCol = col + 1;
-    nextRow = row + (color === Colors.White ? -1 : 1);
-
-    if (isDirValid(nextRow) && isDirValid(nextCol)) {
-      const nextCell = cells[nextRow][nextCol];
-
-      if (this.isEnemies(cell, nextCell)) {
-        this.setOnMoveAction(cell, nextCell);
-      }
-    }
-
-    // смотрим противника справа
-    nextCol = col - 1;
-    nextRow = row + (color === Colors.White ? -1 : 1);
-
-    if (isDirValid(nextRow) && isDirValid(nextCol)) {
-      const nextCell = cells[nextRow][nextCol];
-
-      if (this.isEnemies(cell, nextCell)) {
-        this.setOnMoveAction(cell, nextCell);
-      }
-    }
   }
 }

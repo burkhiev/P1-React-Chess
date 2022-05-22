@@ -12,7 +12,6 @@ const classes = classnames(
   'border-1',
   'mt-5',
   'p-2',
-  'bg-light',
 );
 
 export default function App() {
@@ -20,6 +19,9 @@ export default function App() {
     <ErrorBoundary>
       <Provider store={store}>
         <div className={classes}>
+          <div className="text-center mt-2 mb-4">
+            <h1 className="display-3">React chess</h1>
+          </div>
           <ChessboardComponent />
         </div>
       </Provider>

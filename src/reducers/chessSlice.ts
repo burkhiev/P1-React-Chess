@@ -1,7 +1,7 @@
 import { TypedUseSelectorHook, useSelector } from 'react-redux';
 import { createSlice } from '@reduxjs/toolkit';
 
-import { Colors } from '../services/Colors';
+import { Colors } from '../services/enums/Colors';
 import { RootState } from '../store';
 
 const initialState = {

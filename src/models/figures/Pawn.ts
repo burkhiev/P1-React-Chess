@@ -1,5 +1,5 @@
-import { Colors } from '../../services/Colors';
-import { FigureNames } from '../enums/FigureNames';
+import { Colors } from '../../services/enums/Colors';
+import { FigureNames } from '../../services/enums/FigureNames';
 import { IFigure } from '../interfaces/IFigure';
 
 export default class Pawn implements IFigure {

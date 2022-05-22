@@ -1,6 +1,6 @@
 import React from 'react';
-import { Colors } from '../services/Colors';
-import { FigureNames } from '../models/enums/FigureNames';
+import { Colors } from '../services/enums/Colors';
+import { FigureNames } from '../services/enums/FigureNames';
 import { IFigure } from '../models/interfaces/IFigure';
 
 interface IFigureComponentProps {

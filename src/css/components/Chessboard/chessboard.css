@@ -1,0 +1,39 @@
+.chessboard-team-header-on {
+    color: whitesmoke;
+    background-color: #2c2c2c;
+    animation-name: on-chessboard-team-header-on;
+    animation-timing-function: ease-out;
+    animation-duration: 0.3s;
+}
+
+@keyframes on-chessboard-team-header-on {
+    from {
+        color: #626262;
+        background-color: transparent;
+    }
+
+    to {
+        color: whitesmoke;
+        background-color: #2c2c2c;
+    }
+}
+
+.chessboard-team-header-off {
+    color: #626262;
+    background-color: transparent;
+    animation-name: on-chessboard-team-header-off;
+    animation-timing-function: ease-out;
+    animation-duration: 0.3s;
+}
+
+@keyframes on-chessboard-team-header-off {
+    from {
+        color: whitesmoke;
+        background-color: #2c2c2c;
+    }
+    
+    to {
+        color: #626262;
+        background-color: transparent;
+    }
+}

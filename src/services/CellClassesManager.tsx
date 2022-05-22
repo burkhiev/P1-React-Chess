@@ -1,8 +1,10 @@
 import classNames from 'classnames';
 
-import { Colors } from './Colors';
-import { CellStatus } from '../models/enums/CellStates';
+import { Colors } from './enums/Colors';
+import { CellStatus } from './enums/CellStates';
 import { IFigure } from '../models/interfaces/IFigure';
+import { ChessGameStates } from './enums/ChessGameStates';
+import { FigureNames } from './enums/FigureNames';
 
 /**
  * Данный класс помогает с визуальной частью CellComponent
@@ -14,14 +16,15 @@ export default class CellClassesManager {
      * необходимые для составления списка классов.
      * @returns Список классов для CellComponent.
      */
-  static getPreparedContent(props: {
+  static getPreparedCssClasses(props: {
         figure: IFigure | undefined,
         cellColor: Colors,
-        status: CellStatus,
-        currentStepColor: Colors
+        cellStatus: CellStatus,
+        currentStepColor: Colors,
+        gameState: ChessGameStates
     }) {
     const {
-      figure, cellColor, status, currentStepColor,
+      figure, cellColor, cellStatus, currentStepColor, gameState,
     } = props;
 
     // Устанавливаем классы по умолчанию
@@ -34,29 +37,41 @@ export default class CellClassesManager {
       classesObj['cell-white'] = false;
     }
 
+    // Покраска активной/атакуемой клетки
     if (figure) {
       // Цвет выбранной клетки
-      if (status === CellStatus.Active) {
+      if (cellStatus === CellStatus.Active) {
         this.resetBackgroundClasses(classesObj);
         classesObj['bg-primary'] = true;
 
         // Цвет атакуемой клетки
-      } else if (status === CellStatus.Target) {
+      } else if (cellStatus === CellStatus.Target) {
         this.resetBackgroundClasses(classesObj);
         classesObj['bg-danger'] = true;
       }
     }
 
-    // Переключение цвета клетки в зависимости от очередности.
+    // Переключение цвета клетки в зависимости от очередности
     if (currentStepColor === figure?.color) {
       classesObj['cell-can-select'] = true;
     } else {
       classesObj['cell-can-select'] = false;
     }
 
+    if (gameState === ChessGameStates.Check
+      && figure?.figureName !== FigureNames.King
+    ) {
+      classesObj['cell-can-select'] = false;
+    }
+
+    // При окончании игры убираем возможность выделения
+    if (gameState === ChessGameStates.Checkmate || gameState === ChessGameStates.Mate) {
+      classesObj['cell-can-select'] = false;
+    }
+
     const cellClasses = classNames(classesObj);
 
-    return { cellClasses };
+    return { cellCss: cellClasses };
   }
 
   static getDefaultCellClasses() {

@@ -51,11 +51,14 @@
             {
                 "tsx": "never"
             }
-        ]
+        ],
+
+        "no-restricted-globals":"off"
     },
     "ignorePatterns":[
         "/*.js", // webpack.config.js
-        "/dist"
+        "/dist",
+        "/**/*.css"
     ],
     "settings": {
         "import/resolver": {

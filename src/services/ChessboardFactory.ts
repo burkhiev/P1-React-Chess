@@ -6,8 +6,10 @@ import Knight from '../models/figures/Knight';
 import Pawn from '../models/figures/Pawn';
 import Queen from '../models/figures/Queen';
 import Rook from '../models/figures/Rook';
-import { Colors } from './Colors';
+import { Colors } from './enums/Colors';
 import { ICell } from '../models/interfaces/ICell';
+
+import { IS_TEST } from '../globals';
 
 export default class ChessboardFactory {
   private static size: number = 8;
@@ -19,8 +21,12 @@ export default class ChessboardFactory {
   static getNewBoard(): Chessboard {
     const chessboard = this.getClearBoard();
 
-    this.fillWithWhiteFigures(chessboard);
-    this.fillWithBlackFigures(chessboard);
+    if (IS_TEST) {
+      this.specificFill(chessboard);
+    } else {
+      this.fillWithWhiteFigures(chessboard);
+      this.fillWithBlackFigures(chessboard);
+    }
 
     return chessboard;
   }
@@ -52,6 +58,22 @@ export default class ChessboardFactory {
     }
 
     return new Chessboard(cells);
+  }
+
+  /**
+   * Специальный заполнитель. Служит для целей тестирования.
+   * @param chessboard шахматная доска
+   */
+  private static specificFill(chessboard: Chessboard) {
+    const { cells } = chessboard;
+
+    // chessboard.currentMove.color = Colors.Black;
+
+    cells[0][1].figure = new King(Colors.Black);
+
+    cells[2][0].figure = new King(Colors.White);
+    cells[1][2].figure = new Rook(Colors.White);
+    cells[2][2].figure = new Rook(Colors.White);
   }
 
   /**

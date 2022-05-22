@@ -1,16 +1,19 @@
 import React, { ReactElement, useState } from 'react';
 
-import { CellStatus } from '../models/enums/CellStates';
+import { CellStatus } from '../services/enums/CellStates';
 import { ICell } from '../models/interfaces/ICell';
-import { ICurrentStep } from '../models/interfaces/ICurrentStep';
 import CellClassesManager from '../services/CellClassesManager';
 import DotComponent from './DotComponent';
 import FigureComponent from './FigureComponent';
+import IChessGameInfo from '../models/interfaces/IChessGameInfo';
+
+import '../css/components/Cell/cell.css';
+import { ChessGameStates } from '../services/enums/ChessGameStates';
 
 interface ICellComponentProps {
   cell: ICell;
 
-  currentStep: ICurrentStep;
+  currentStep: IChessGameInfo;
 
   // eslint-disable-next-line no-unused-vars
   onSelect: () => void;
@@ -21,11 +24,19 @@ export default function CellComponent(props: ICellComponentProps) {
 
   const [figure, setFigure] = useState(cell.figure);
   const [status, setStatus] = useState(cell.status);
-  const [currentStepColor, setCurrentStepColor] = useState(currentStep.color);
+  const [gameState, setGameState] = useState(currentStep.gameState);
+  const [currentStepColor, setCurrentStepColor] = useState(currentStep.currentTeamColor);
 
   // Установка действий для обновления состояния.
   // Данный метод используется для контроля визуальной части из Chessboard.
   cell.updateCellComponentStates = () => {
+    if (currentStep.gameState === ChessGameStates.Checkmate
+      || currentStep.gameState === ChessGameStates.Mate
+    ) {
+      setGameState(currentStep.gameState);
+      return;
+    }
+
     switch (cell.status) {
       case CellStatus.Active:
         setStatus(CellStatus.Active);
@@ -49,28 +60,38 @@ export default function CellComponent(props: ICellComponentProps) {
       setFigure(cell.figure);
     }
 
-    setCurrentStepColor(currentStep.color);
+    setCurrentStepColor(currentStep.currentTeamColor);
   };
+
+  let onClick = onSelect;
+  if (gameState === ChessGameStates.Checkmate || gameState === ChessGameStates.Mate) {
+    // eslint-disable-next-line no-unused-vars
+    onClick = () => { };
+  }
 
   // Получаем список классов
   const arg = {
-    figure, cellColor: cell.color, status, currentStepColor,
+    figure,
+    cellColor: cell.color,
+    cellStatus: status,
+    currentStepColor,
+    gameState,
   };
-  const { cellClasses } = CellClassesManager.getPreparedContent(arg);
+  const { cellCss } = CellClassesManager.getPreparedCssClasses(arg);
 
   let content: ReactElement = <span />;
   if (figure) {
     // Отображаем фигуру
     content = <FigureComponent figure={figure} cellColor={cell.color} />;
 
-    // Если фигуры в клетке нет и она достижима, то ставим точку
+    // Если фигуры в клетке нет, но она достижима, то ставим точку
   } else if (status === CellStatus.OnWay) {
     content = <DotComponent />;
   }
 
   return (
     <div
-      className={cellClasses}
+      className={cellCss}
       onClick={onSelect}
       onKeyDown={onSelect}
       role="cell"

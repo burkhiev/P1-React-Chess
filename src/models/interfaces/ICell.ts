@@ -1,5 +1,5 @@
-import { CellStatus } from '../enums/CellStates';
-import { Colors } from '../../services/Colors';
+import { CellStatus } from '../../services/enums/CellStates';
+import { Colors } from '../../services/enums/Colors';
 import { IFigure } from './IFigure';
 
 export interface ICell {

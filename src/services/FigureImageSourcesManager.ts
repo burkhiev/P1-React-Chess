@@ -1,5 +1,5 @@
-import { Colors } from './Colors';
-import { FigureNames } from '../models/enums/FigureNames';
+import { Colors } from './enums/Colors';
+import { FigureNames } from './enums/FigureNames';
 import { IFigure } from '../models/interfaces/IFigure';
 
 /**
@@ -23,7 +23,7 @@ export const FigureImageSources = {
 /**
  * Класс отвечает за доступ к хранилищу картинок
  */
-export class FigureImageSourcesService {
+export class FigureImageSourcesManager {
   static getFigureImageSource(figure: IFigure): string {
     if (figure.color === Colors.White) {
       return this.getWhiteFigureImageSource(figure);
