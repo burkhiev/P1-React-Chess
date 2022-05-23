@@ -6,7 +6,7 @@ import CellComponent from './CellComponent';
 import ChessboardFactory from '../services/ChessboardFactory';
 import { Colors } from '../services/enums/Colors';
 
-import '../css/components/Chessboard/chessboard.css';
+import '../css/components/chessboard.css';
 import '../css/shared.css';
 import { ChessGameStates } from '../services/enums/ChessGameStates';
 import ChessConfirms from '../services/ChessConfirms';
@@ -30,8 +30,26 @@ const getDefaultChessboardTeamHeaderCss = () => ({
 
 export default function ChessboardComponent() {
   const [chessboard, setChessboard] = useState(ChessboardFactory.getNewBoard());
-  const [gameState, setGameState] = useState(chessboard.gameInfo.gameState);
-  const [currentColor, setCurrentColor] = useState(chessboard.gameInfo.currentTeamColor);
+  const [gameState, setGameState] = useState(ChessGameStates.Default);
+  const [currentColor, setCurrentColor] = useState(Colors.White);
+
+  function setDefaultComponentState() {
+    setChessboard(ChessboardFactory.getNewBoard());
+    setGameState(ChessGameStates.Default);
+    setCurrentColor(Colors.White);
+  }
+
+  const startNewGameBtnOnClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (ChessConfirms.confirmRestartGame()) {
+      setDefaultComponentState();
+    }
+  };
+
+  const startNewGameAtEndBtnOnClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setDefaultComponentState();
+  };
 
   chessboard.onSwitchPlayerCallback = () => {
     setCurrentColor(chessboard.gameInfo.currentTeamColor);
@@ -40,38 +58,6 @@ export default function ChessboardComponent() {
   chessboard.onGameEndCallback = () => {
     setGameState(chessboard.gameInfo.gameState);
   };
-
-  const startNewGameBtnOnClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-
-    if (ChessConfirms.confirmRestartGame()) {
-      setChessboard(ChessboardFactory.getNewBoard());
-      setCurrentColor(Colors.White);
-      setGameState(ChessGameStates.Default);
-    }
-  };
-
-  const contentArray = chessboard.cells.map((row) => {
-    const result = (
-      <div
-        key={nanoid()}
-        className="row justify-content-center"
-      >
-        {
-          row.map((cell) => (
-            <CellComponent
-              key={nanoid()}
-              cell={cell}
-              onSelect={() => chessboard.onAction(cell)}
-              currentStep={chessboard.gameInfo}
-            />
-          ))
-        }
-      </div>
-    );
-
-    return result;
-  });
 
   const whiteTeamHeaderCss = getDefaultChessboardTeamHeaderCss();
   const blackTeamHeaderCss = getDefaultChessboardTeamHeaderCss();
@@ -119,26 +105,65 @@ export default function ChessboardComponent() {
           {Colors[currentColor]}
           {' '}
           team win!
+          <br />
+          Do you want to play again?
         </h3>
+        <div className="d-flex justify-content-center">
+          <button
+            type="button"
+            id="startNewGameAtEndBtn"
+            name="startNewGameAtEndBtn"
+            className="col-4 btn btn-outline-warning mt-3"
+            onClick={startNewGameAtEndBtnOnClick}
+          >
+            Yes, I do!
+          </button>
+        </div>
       </div>
     );
   }
 
+  const contentArray = chessboard.cells.map((row) => {
+    const result = (
+      <div
+        key={nanoid()}
+        className="d-flex"
+      >
+        {
+          row.map((cell) => (
+            <div
+              key={nanoid()}
+              className="m-1"
+            >
+              <CellComponent
+                cell={cell}
+                onSelect={() => chessboard.onAction(cell)}
+                currentStep={chessboard.gameInfo}
+              />
+            </div>
+          ))
+        }
+      </div>
+    );
+
+    return result;
+  });
+
   return (
-    <div className="border bg-light chessboard-component">
+    <div className="row justify-content-center border bg-light">
       <div className={rawStatusBarCss}>
         {statusBar}
       </div>
-      <div className="my-3 py-5 chessboard">
+      <div className="py-5 col-10 col-md-7">
         {contentArray.map((renderedRow) => renderedRow)}
       </div>
       <div className="mt-3 p-2">
-        <div className="d-flex justify-content-end">
+        <div className="d-flex justify-content-end border-top p-3">
           <button
             type="button"
             id="startNewGameBtn"
             name="startNewGameBtn"
-            className="btn btn-secondary m-2"
+            className="btn btn-outline-secondary mt-3"
             onClick={startNewGameBtnOnClick}
           >
             Start new game

@@ -2,13 +2,13 @@ import React, { ReactElement, useState } from 'react';
 
 import { CellStatus } from '../services/enums/CellStates';
 import { ICell } from '../models/interfaces/ICell';
-import CellClassesManager from '../services/CellClassesManager';
-import DotComponent from './DotComponent';
+import CellCssManager from '../services/CellCssManager';
 import FigureComponent from './FigureComponent';
 import IChessGameInfo from '../models/interfaces/IChessGameInfo';
 
-import '../css/components/Cell/cell.css';
+import '../css/components/cell.css';
 import { ChessGameStates } from '../services/enums/ChessGameStates';
+import EmptyFigureComponent from './EmptyFigureComponent';
 
 interface ICellComponentProps {
   cell: ICell;
@@ -77,16 +77,19 @@ export default function CellComponent(props: ICellComponentProps) {
     currentStepColor,
     gameState,
   };
-  const { cellCss } = CellClassesManager.getPreparedCssClasses(arg);
+  const cellCss = CellCssManager.getPreparedCssClasses(arg);
 
-  let content: ReactElement = <span />;
+  let content: ReactElement = <EmptyFigureComponent hasDot={false} />;
+
   if (figure) {
-    // Отображаем фигуру
-    content = <FigureComponent figure={figure} cellColor={cell.color} />;
-
-    // Если фигуры в клетке нет, но она достижима, то ставим точку
+    content = (
+      <FigureComponent
+        figureName={figure.figureName}
+        figureColor={figure.color}
+      />
+    );
   } else if (status === CellStatus.OnWay) {
-    content = <DotComponent />;
+    content = <EmptyFigureComponent hasDot />;
   }
 
   return (

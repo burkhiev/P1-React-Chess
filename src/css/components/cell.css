@@ -1,7 +1,5 @@
 div.cell {
-    width: 7vw;
-    height: 7vw;
-    margin: 2px;
+    cursor: pointer;
 }
 
 div.cell.cell-white {
@@ -12,20 +10,33 @@ div.cell.cell-black {
     background-color: rgb(232, 186, 62);
 }
 
+@keyframes on-cell-select-target-hover {
+    from {
+        box-shadow: 0px 0px 2px 2px inset #5c5c5c;
+    }
+
+    to {
+        box-shadow: 0px 0px 4px 4px inset #282828;
+    }
+}
+
 div.cell.cell-can-select {
     box-shadow: 0px 0px 2px 2px inset #5c5c5c;
-    transition: box-shadow 0.2s transform 0.2s;
 }
 
 div.cell.cell-can-select:hover {
+    animation-name: on-cell-select-target-hover;
+    animation-duration: 0.3s;
     box-shadow: 0px 0px 4px 4px inset #282828;
 }
 
-div.cell.bg-danger {
+div.cell.cell-target {
     box-shadow: 0px 0px 2px 2px inset #5c5c5c;
     background-color: rgb(191, 72, 72);
 }
 
 div.cell.cell-target:hover {
-    box-shadow: 0px 0px 5px 4px inset #282828;
+    animation-name: on-cell-select-target-hover;
+    animation-duration: 0.3s;
+    box-shadow: 0px 0px 4px 4px inset #282828;
 }

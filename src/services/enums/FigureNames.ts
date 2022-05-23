@@ -12,5 +12,6 @@ export enum FigureNames {
     Knight = 'Knight',
     Bishop = 'Bishop',
     Queen = 'Queen',
-    King = 'King'
+    King = 'King',
+    Empty = 'Empty'
 }

@@ -9,7 +9,35 @@ import { FigureNames } from './enums/FigureNames';
 /**
  * Данный класс помогает с визуальной частью CellComponent
  */
-export default class CellClassesManager {
+export default class CellCssManager {
+  static getDefaultCellClasses() {
+    return {
+      'col-1': true,
+      border: true,
+      'bg-dark': false,
+      'bg-white': false,
+      'bg-primary': false,
+      'bg-danger': false,
+      'rounded-3': true,
+      'w-100': true,
+      'h-100': true,
+      cell: true,
+      'cell-white': true,
+      'cell-black': false,
+      'cell-can-select': false,
+      'cell-target': false,
+    };
+  }
+
+  static resetBackgroundClasses(
+    colorObj: ReturnType<typeof CellCssManager.getDefaultCellClasses>,
+  ) {
+    colorObj['bg-danger'] = false;
+    colorObj['bg-dark'] = false;
+    colorObj['bg-primary'] = false;
+    colorObj['bg-white'] = false;
+  }
+
   /**
      * Составляет список классов для CellComponent
      * @param props Объект, содержащий параметры
@@ -48,6 +76,7 @@ export default class CellClassesManager {
       } else if (cellStatus === CellStatus.Target) {
         this.resetBackgroundClasses(classesObj);
         classesObj['bg-danger'] = true;
+        classesObj['cell-target'] = true;
       }
     }
 
@@ -71,35 +100,6 @@ export default class CellClassesManager {
 
     const cellClasses = classNames(classesObj);
 
-    return { cellCss: cellClasses };
-  }
-
-  static getDefaultCellClasses() {
-    return {
-      'col-1': true,
-      'd-flex': true,
-      'justify-content-center': true,
-      'align-content-center': true,
-      border: true,
-      'bg-dark': false,
-      'bg-white': false,
-      'bg-primary': false,
-      'bg-danger': false,
-      btn: true,
-      cell: true,
-      'cell-white': true,
-      'cell-black': false,
-      'cell-can-select': false,
-      'cell-target': false,
-    };
-  }
-
-  static resetBackgroundClasses(
-    colorObj: ReturnType<typeof CellClassesManager.getDefaultCellClasses>,
-  ) {
-    colorObj['bg-danger'] = false;
-    colorObj['bg-dark'] = false;
-    colorObj['bg-primary'] = false;
-    colorObj['bg-white'] = false;
+    return cellClasses;
   }
 }

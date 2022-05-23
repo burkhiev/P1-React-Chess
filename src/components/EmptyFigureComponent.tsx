@@ -6,24 +6,25 @@ import { FigureNames } from '../services/enums/FigureNames';
 import { FigureImageSourcesManager } from '../services/FigureImageSourcesManager';
 import { getImageContainerCss, getImageCss } from './CellImageCss';
 
-export interface IFigureComponentProps {
-  figureName: FigureNames,
-  figureColor: Colors
+import DotComponent from './DotComponent';
+
+interface IEmptyCellComponent {
+  hasDot: boolean
 }
 
-export default function FigureComponent(props: IFigureComponentProps) {
-  const { figureName, figureColor } = props;
-  const figureImg = FigureImageSourcesManager
-    .getFigureImageSource(figureName, figureColor);
+export default function EmptyFigureComponent(props: IEmptyCellComponent) {
+  const { hasDot } = props;
+
+  const img = FigureImageSourcesManager
+    .getFigureImageSource(FigureNames.Empty, Colors.White);
 
   const rawImgContainerCss = classNames(getImageContainerCss());
   const rawImgCss = classNames(getImageCss());
 
-  const altText = `${Colors[figureColor]} ${FigureNames[figureName]}`;
-
   return (
     <div className={rawImgContainerCss}>
-      <img src={figureImg} className={rawImgCss} alt={altText} />
+      <img src={img} className={rawImgCss} alt="Empty figure" />
+      {hasDot && <DotComponent />}
     </div>
   );
 }

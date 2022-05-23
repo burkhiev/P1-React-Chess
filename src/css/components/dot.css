@@ -2,9 +2,9 @@
     height: 10px;
     width: 10px;
     margin: auto;
-    box-shadow: 0px 0px 1px 1px blue;
+    box-shadow: 0px 0px 1px 1px rgb(9, 75, 181);
     border-radius: 50%;
-    background-color: blue;
+    background-color: rgb(9, 75, 181);
     
     animation-duration: 0.3s;
     animation-name: fade-out;

@@ -1,43 +1,43 @@
 import { Colors } from './enums/Colors';
 import { FigureNames } from './enums/FigureNames';
-import { IFigure } from '../models/interfaces/IFigure';
 
 /**
  * Хранилище картинок для соответствующих фигур
  */
 export const FigureImageSources = {
-  PAWN_WHITE: '',
-  ROOK_WHITE: '',
-  KNIGHT_WHITE: '',
-  BISHOP_WHITE: '',
-  QUEEN_WHITE: '',
-  KING_WHITE: '',
-  PAWN_BLACK: '',
-  ROOK_BLACK: '',
-  KNIGHT_BLACK: '',
-  BISHOP_BLACK: '',
-  QUEEN_BLACK: '',
-  KING_BLACK: '',
+  DEFAULT: '../../static/chess/empty-cell.png',
+  PAWN_WHITE: '../../static/chess/white-pawn.png',
+  ROOK_WHITE: '../../static/chess/white-rook.png',
+  KNIGHT_WHITE: '../../static/chess/white-knight.png',
+  BISHOP_WHITE: '../../static/chess/white-bishop.png',
+  QUEEN_WHITE: '../../static/chess/white-queen.png',
+  KING_WHITE: '../../static/chess/white-king.png',
+  PAWN_BLACK: '../../static/chess/black-pawn.png',
+  ROOK_BLACK: '../../static/chess/black-rook.png',
+  KNIGHT_BLACK: '../../static/chess/black-knight.png',
+  BISHOP_BLACK: '../../static/chess/black-bishop.png',
+  QUEEN_BLACK: '../../static/chess/black-queen.png',
+  KING_BLACK: '../../static/chess/black-king.png',
 };
 
 /**
  * Класс отвечает за доступ к хранилищу картинок
  */
 export class FigureImageSourcesManager {
-  static getFigureImageSource(figure: IFigure): string {
-    if (figure.color === Colors.White) {
-      return this.getWhiteFigureImageSource(figure);
+  static getFigureImageSource(figureName: FigureNames, figureColor: Colors): string {
+    if (figureColor === Colors.White) {
+      return this.getWhiteFigureImageSource(figureName, figureColor);
     }
 
-    return this.getBlackFigureImageSource(figure);
+    return this.getBlackFigureImageSource(figureName, figureColor);
   }
 
-  private static getWhiteFigureImageSource(figure: IFigure): string {
-    if (figure.color === Colors.White) {
-      throw Error(`Invalid figure color: ${Colors[figure.color]}`);
+  private static getWhiteFigureImageSource(figureName: FigureNames, figureColor: Colors): string {
+    if (figureColor !== Colors.White) {
+      throw Error(`Invalid figure color: ${Colors[figureColor]}`);
     }
 
-    switch (figure.figureName) {
+    switch (figureName) {
       case FigureNames.Pawn:
         return FigureImageSources.PAWN_WHITE;
       case FigureNames.Rook:
@@ -51,16 +51,16 @@ export class FigureImageSourcesManager {
       case FigureNames.King:
         return FigureImageSources.KING_WHITE;
       default:
-        throw Error('Unknown error.');
+        return FigureImageSources.DEFAULT;
     }
   }
 
-  private static getBlackFigureImageSource(figure: IFigure): string {
-    if (figure.color === Colors.Black) {
-      throw Error(`Invalid figure color: ${Colors[figure.color]}`);
+  private static getBlackFigureImageSource(figureName: FigureNames, figureColor: Colors): string {
+    if (figureColor !== Colors.Black) {
+      throw Error(`Invalid figure color: ${Colors[figureColor]}`);
     }
 
-    switch (figure.figureName) {
+    switch (figureName) {
       case FigureNames.Pawn:
         return FigureImageSources.PAWN_BLACK;
       case FigureNames.Rook:
@@ -74,7 +74,7 @@ export class FigureImageSourcesManager {
       case FigureNames.King:
         return FigureImageSources.KING_BLACK;
       default:
-        throw Error('Unknown error.');
+        return FigureImageSources.DEFAULT;
     }
   }
 }
