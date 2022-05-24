@@ -1,10 +1,10 @@
 import classNames from 'classnames';
 
-import { Colors } from './enums/Colors';
-import { CellStatus } from './enums/CellStates';
-import { IFigure } from '../models/interfaces/IFigure';
-import { ChessGameStates } from './enums/ChessGameStates';
-import { FigureNames } from './enums/FigureNames';
+import { Colors } from '../../services/enums/Colors';
+import { CellStatus } from '../../models/cells/CellStates';
+import { IFigure } from '../../models/figures/IFigure';
+import { ChessGameStates } from '../../services/enums/ChessGameStates';
+import { FigureNames } from '../../models/figures/FigureNames';
 
 /**
  * Данный класс помогает с визуальной частью CellComponent
@@ -26,16 +26,17 @@ export default class CellCssManager {
       'cell-black': false,
       'cell-can-select': false,
       'cell-target': false,
+      'cell-king-on-attack': false,
     };
   }
 
   static resetBackgroundClasses(
-    colorObj: ReturnType<typeof CellCssManager.getDefaultCellClasses>,
+    classesObj: ReturnType<typeof CellCssManager.getDefaultCellClasses>,
   ) {
-    colorObj['bg-danger'] = false;
-    colorObj['bg-dark'] = false;
-    colorObj['bg-primary'] = false;
-    colorObj['bg-white'] = false;
+    classesObj['bg-danger'] = false;
+    classesObj['bg-dark'] = false;
+    classesObj['bg-primary'] = false;
+    classesObj['bg-white'] = false;
   }
 
   /**
@@ -44,17 +45,13 @@ export default class CellCssManager {
      * необходимые для составления списка классов.
      * @returns Список классов для CellComponent.
      */
-  static getPreparedCssClasses(props: {
-        figure: IFigure | undefined,
-        cellColor: Colors,
-        cellStatus: CellStatus,
-        currentStepColor: Colors,
-        gameState: ChessGameStates
-    }) {
-    const {
-      figure, cellColor, cellStatus, currentStepColor, gameState,
-    } = props;
-
+  static getPreparedCssClasses(
+    figure: IFigure | undefined,
+    cellColor: Colors,
+    cellStatus: CellStatus,
+    currentStepColor: Colors,
+    gameState: ChessGameStates,
+  ) {
     // Устанавливаем классы по умолчанию
     const classesObj = this.getDefaultCellClasses();
 
@@ -88,9 +85,11 @@ export default class CellCssManager {
     }
 
     if (gameState === ChessGameStates.Check
-      && figure?.figureName !== FigureNames.King
+      && figure?.color === currentStepColor
+      && figure.figureName === FigureNames.King
     ) {
-      classesObj['cell-can-select'] = false;
+      this.resetBackgroundClasses(classesObj);
+      classesObj['cell-king-on-attack'] = true;
     }
 
     // При окончании игры убираем возможность выделения
@@ -98,8 +97,6 @@ export default class CellCssManager {
       classesObj['cell-can-select'] = false;
     }
 
-    const cellClasses = classNames(classesObj);
-
-    return cellClasses;
+    return classNames(classesObj);
   }
 }

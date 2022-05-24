@@ -1,12 +1,12 @@
 import React from 'react';
 import classNames from 'classnames';
 
-import { Colors } from '../services/enums/Colors';
-import { FigureNames } from '../services/enums/FigureNames';
-import { FigureImageSourcesManager } from '../services/FigureImageSourcesManager';
-import { getImageContainerCss, getImageCss } from './CellImageCss';
+import { Colors } from '../../services/enums/Colors';
+import { FigureNames } from '../../models/figures/FigureNames';
+import { FigureImageSourcesManager } from '../../services/figure/FigureImageSourcesManager';
+import FigureCssManager from './FigureCssManager';
 
-import DotComponent from './DotComponent';
+import DotComponent from '../dot/DotComponent';
 
 interface IEmptyCellComponent {
   hasDot: boolean
@@ -18,8 +18,8 @@ export default function EmptyFigureComponent(props: IEmptyCellComponent) {
   const img = FigureImageSourcesManager
     .getFigureImageSource(FigureNames.Empty, Colors.White);
 
-  const rawImgContainerCss = classNames(getImageContainerCss());
-  const rawImgCss = classNames(getImageCss());
+  const rawImgContainerCss = classNames(FigureCssManager.getImageContainerCss());
+  const rawImgCss = classNames(FigureCssManager.getImageCss());
 
   return (
     <div className={rawImgContainerCss}>

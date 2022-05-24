@@ -2,15 +2,15 @@ import React, { ReactElement, useState } from 'react';
 import { nanoid } from '@reduxjs/toolkit';
 import classNames from 'classnames';
 
-import CellComponent from './CellComponent';
-import { Colors } from '../services/enums/Colors';
+import CellComponent from '../cell/CellComponent';
+import { Colors } from '../../services/enums/Colors';
 
-import '../css/components/chessboard.css';
-import '../css/shared.css';
-import { ChessGameStates } from '../services/enums/ChessGameStates';
-import AppConfirms from '../services/ChessConfirms';
-import ChessboardManager from '../services/ChessboardManager';
-import ChessboardFactory from '../services/ChessboardFactory';
+import './chessboard.css';
+import '../shared/shared.css';
+import { ChessGameStates } from '../../services/enums/ChessGameStates';
+import { AppConfirms } from '../../globals';
+import ChessboardManager from '../../services/chessboard/ChessboardManager';
+import ChessboardFactory from '../../services/chessboard/ChessboardFactory';
 
 const getDefaultChessboardStatusBarCss = () => ({
   'py-4': true,
@@ -173,7 +173,7 @@ export default function ChessboardComponent() {
       <div className={rawStatusBarCss}>
         {statusBar}
       </div>
-      <div className="py-5 col-10 col-md-7">
+      <div className="py-5 col-10 col-md-7 col-lg-5">
         {contentArray.map((renderedRow) => renderedRow)}
       </div>
       <div className="mt-3 p-2">

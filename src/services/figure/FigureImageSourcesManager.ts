@@ -1,23 +1,23 @@
-import { Colors } from './enums/Colors';
-import { FigureNames } from './enums/FigureNames';
+import { Colors } from '../enums/Colors';
+import { FigureNames } from '../../models/figures/FigureNames';
 
 /**
  * Хранилище картинок для соответствующих фигур
  */
 export const FigureImageSources = {
-  DEFAULT: '../../static/chess/empty-cell.png',
-  PAWN_WHITE: '../../static/chess/white-pawn.png',
-  ROOK_WHITE: '../../static/chess/white-rook.png',
-  KNIGHT_WHITE: '../../static/chess/white-knight.png',
-  BISHOP_WHITE: '../../static/chess/white-bishop.png',
-  QUEEN_WHITE: '../../static/chess/white-queen.png',
-  KING_WHITE: '../../static/chess/white-king.png',
-  PAWN_BLACK: '../../static/chess/black-pawn.png',
-  ROOK_BLACK: '../../static/chess/black-rook.png',
-  KNIGHT_BLACK: '../../static/chess/black-knight.png',
-  BISHOP_BLACK: '../../static/chess/black-bishop.png',
-  QUEEN_BLACK: '../../static/chess/black-queen.png',
-  KING_BLACK: '../../static/chess/black-king.png',
+  DEFAULT: '../../../static/chess/empty-cell.png',
+  PAWN_WHITE: '../../../static/chess/white-pawn.png',
+  ROOK_WHITE: '../../../static/chess/white-rook.png',
+  KNIGHT_WHITE: '../../../static/chess/white-knight.png',
+  BISHOP_WHITE: '../../../static/chess/white-bishop.png',
+  QUEEN_WHITE: '../../../static/chess/white-queen.png',
+  KING_WHITE: '../../../static/chess/white-king.png',
+  PAWN_BLACK: '../../../static/chess/black-pawn.png',
+  ROOK_BLACK: '../../../static/chess/black-rook.png',
+  KNIGHT_BLACK: '../../../static/chess/black-knight.png',
+  BISHOP_BLACK: '../../../static/chess/black-bishop.png',
+  QUEEN_BLACK: '../../../static/chess/black-queen.png',
+  KING_BLACK: '../../../static/chess/black-king.png',
 };
 
 /**

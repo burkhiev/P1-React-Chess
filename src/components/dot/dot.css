@@ -6,7 +6,7 @@
     border-radius: 50%;
     background-color: rgb(9, 75, 181);
     
-    animation-duration: 0.3s;
+    animation-duration: 0.2s;
     animation-name: fade-out;
     animation-timing-function: ease-out;
 }

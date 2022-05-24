@@ -1,14 +1,14 @@
 import React, { ReactElement, useState } from 'react';
 
-import { CellStatus } from '../services/enums/CellStates';
-import { ICell } from '../models/interfaces/ICell';
-import CellCssManager from '../services/CellCssManager';
-import FigureComponent from './FigureComponent';
-import IChessGameInfo from '../models/interfaces/IChessGameInfo';
+import { CellStatus } from '../../models/cells/CellStates';
+import { ICell } from '../../models/cells/ICell';
+import CellCssManager from './CellCssManager';
+import FigureComponent from '../figure/FigureComponent';
+import IChessGameInfo from '../../services/interfaces/IChessGameInfo';
 
-import '../css/components/cell.css';
-import { ChessGameStates } from '../services/enums/ChessGameStates';
-import EmptyFigureComponent from './EmptyFigureComponent';
+import './cell.css';
+import { ChessGameStates } from '../../services/enums/ChessGameStates';
+import EmptyFigureComponent from '../figure/EmptyFigureComponent';
 
 interface ICellComponentProps {
   cell: ICell;
@@ -22,6 +22,7 @@ interface ICellComponentProps {
 export default function CellComponent(props: ICellComponentProps) {
   const { cell, onSelect, currentStep } = props;
 
+  // Извлечение полей для корректного обновления классов React компонента.
   const [figure, setFigure] = useState(cell.figure);
   const [status, setStatus] = useState(cell.status);
   const [gameState, setGameState] = useState(currentStep.gameState);
@@ -63,21 +64,14 @@ export default function CellComponent(props: ICellComponentProps) {
     setCurrentStepColor(currentStep.currentTeamColor);
   };
 
-  let onClick = onSelect;
-  if (gameState === ChessGameStates.Checkmate || gameState === ChessGameStates.Mate) {
-    // eslint-disable-next-line no-unused-vars
-    onClick = () => { };
-  }
-
   // Получаем список классов
-  const arg = {
+  const cellCss = CellCssManager.getPreparedCssClasses(
     figure,
-    cellColor: cell.color,
-    cellStatus: status,
+    cell.color,
+    status,
     currentStepColor,
     gameState,
-  };
-  const cellCss = CellCssManager.getPreparedCssClasses(arg);
+  );
 
   let content: ReactElement = <EmptyFigureComponent hasDot={false} />;
 

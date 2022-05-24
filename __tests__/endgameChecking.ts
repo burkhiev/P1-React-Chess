@@ -2,16 +2,16 @@
 /* eslint-disable no-undef */
 import 'jest';
 
-import ChessboardManager from '../src/services/ChessboardManager';
-import ChessboardFactory from '../src/services/ChessboardFactory';
+import ChessboardManager from '../src/services/chessboard/ChessboardManager';
+import ChessboardFactory from '../src/services/chessboard/ChessboardFactory';
 import { Colors } from '../src/services/enums/Colors';
 import { ChessGameStates } from '../src/services/enums/ChessGameStates';
 
-import { ICell } from '../src/models/interfaces/ICell';
+import { ICell } from '../src/models/cells/ICell';
 import King from '../src/models/figures/King';
 import Rook from '../src/models/figures/Rook';
-import Cell from '../src/models/Cell';
-import Chessboard from '../src/models/Chessboard';
+import Cell from '../src/models/cells/Cell';
+import Chessboard from '../src/models/chessboards/Chessboard';
 import Bishop from '../src/models/figures/Bishop';
 
 describe('Game end tests', () => {

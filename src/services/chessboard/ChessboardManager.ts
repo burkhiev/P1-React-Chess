@@ -1,13 +1,13 @@
-import { ChessProcessPredicate } from '../globals';
+import { ChessProcessPredicate } from '../../globals';
 import ChessMovesManager from './ChessMovesManager';
 
-import Chessboard from '../models/Chessboard';
-import { ICell } from '../models/interfaces/ICell';
-import IChessGameInfo from '../models/interfaces/IChessGameInfo';
-import { CellStatus } from './enums/CellStates';
-import { ChessGameStates } from './enums/ChessGameStates';
-import { Colors } from './enums/Colors';
-import { FigureNames } from './enums/FigureNames';
+import Chessboard from '../../models/chessboards/Chessboard';
+import { ICell } from '../../models/cells/ICell';
+import IChessGameInfo from '../interfaces/IChessGameInfo';
+import { CellStatus } from '../../models/cells/CellStates';
+import { ChessGameStates } from '../enums/ChessGameStates';
+import { Colors } from '../enums/Colors';
+import { FigureNames } from '../../models/figures/FigureNames';
 
 /** Класс отвечает за логику взаимодействия с шахматной доской. */
 export default class ChessboardManager {
@@ -61,6 +61,7 @@ export default class ChessboardManager {
     this.gameInfo = {
       currentTeamColor: Colors.White,
       gameState: ChessGameStates.Default,
+      priorityTargetCell: undefined,
     };
 
     this.setDefaultCellsState();
@@ -68,26 +69,37 @@ export default class ChessboardManager {
 
   /**
    * Изменяет поведение клеток, в зависимости от различных условий.
-   * Данный метод служит в качестве onClick callback для React компонентов клеток.
+   * Данный метод служит в качестве универсального onClick callback для React компонентов клеток.
    * @param cell Клетка, которая является инициатором действия.
    */
   onAction(cell: ICell) {
     const { selected, gameInfo, lastSelectedCell } = this;
 
-    // Случай, когда клетка уже выбрана
     if (selected) {
+      // Случай, когда клетка уже выделена
+
       switch (cell.status) {
         case CellStatus.Default: {
           this.setDefaultCellsState();
-          const prevCell = lastSelectedCell;
 
-          // Если следующей клеткой является союзник
-          // и если не шах, то переключаемся на него
-          if (gameInfo.gameState !== ChessGameStates.Check
-            && prevCell
-            && this.movesManager.isTeammates(prevCell, cell)) {
-            this.selectCell(cell);
-            // Иначе отменяем выбор
+          const prevCell = lastSelectedCell;
+          const { gameState } = gameInfo;
+
+          const isNextTeammate = prevCell && this.movesManager.isTeammates(prevCell, cell);
+
+          // Если следующей клеткой является союзник, то переключаемся на него
+          if (isNextTeammate) {
+            if (gameState === ChessGameStates.Check) {
+              // При шахе передвигаются только те фигуры, ход которых может спасти короля
+              if (this.canBeatPriorityTarget(cell)) {
+                this.selectCell(cell);
+              } else {
+                this.cancelSelect();
+              }
+            } else {
+              // Обычное переключение на союзника
+              this.selectCell(cell);
+            }
           } else {
             this.cancelSelect();
           }
@@ -102,36 +114,34 @@ export default class ChessboardManager {
         // Если игрок решил сделать ход, выполняем действие
         case CellStatus.OnWay:
         case CellStatus.Target:
-          cell.action();
+          cell.action?.call(undefined);
           this.cancelSelect();
-
-          // если текущий ход поставил шах, ставим выделение на короля.
-          if (gameInfo.gameState === ChessGameStates.Check) {
-            const kingCell = this.movesManager.findKingCell(gameInfo.currentTeamColor);
-            this.selectCell(kingCell);
-          }
           break;
 
         default:
           throw new Error('Unknown CellStatus value');
       }
     } else {
-      // Определяем доступность действий в зависимости от ситуации
+      // Случай, когда клетку нужно выделить
+
       const { gameState, currentTeamColor } = gameInfo;
 
-      const isCurrentTeamCell = !cell.isEmpty
+      const isCurrentTeamCell = cell.figure
         && cell.status === CellStatus.Default
-        && cell.figure?.color === currentTeamColor;
+        && cell.figure.color === currentTeamColor;
 
       if (isCurrentTeamCell) {
         if (gameState === ChessGameStates.Default
           || gameState === ChessGameStates.InProcess) {
           this.selectCell(cell);
-        }
+        } else if (gameState === ChessGameStates.Check) {
+          // При шахе передвигаются только те фигуры, ход которых может спасти короля
+          const itIsKing = cell.figure?.figureName === FigureNames.King;
+          const canMove = this.movesManager.canMoveFromCell(cell);
 
-        if (gameState === ChessGameStates.Check
-          && cell.figure?.figureName === FigureNames.King) {
-          this.selectCell(cell);
+          if ((itIsKing && canMove) || this.canBeatPriorityTarget(cell)) {
+            this.selectCell(cell);
+          }
         }
       }
     }
@@ -152,6 +162,7 @@ export default class ChessboardManager {
     this.gameInfo = {
       currentTeamColor: Colors.White,
       gameState: ChessGameStates.Default,
+      priorityTargetCell: undefined,
     };
 
     this.setDefaultCellsState();
@@ -171,7 +182,7 @@ export default class ChessboardManager {
       for (let j = 0; j < row.length; j += 1) {
         const cell = row[j];
         cell.status = CellStatus.Default;
-        cell.action = () => { };
+        cell.action = undefined;
       }
     }
   }
@@ -186,7 +197,7 @@ export default class ChessboardManager {
       const row = cells[i];
       for (let j = 0; j < size; j += 1) {
         const cell = row[j];
-        cell.updateCellComponentStates();
+        cell.updateCellComponentStates?.call(undefined);
       }
     }
   }
@@ -228,12 +239,12 @@ export default class ChessboardManager {
   private getNextGameState(teamColor: Colors): ChessGameStates {
     const kingCell = this.movesManager.findKingCell(teamColor);
     const enemyColor = kingCell.figure?.color === Colors.White ? Colors.Black : Colors.White;
-
     const reachingEnemyCells = this.movesManager.getReachingEnemyCells(kingCell, enemyColor);
 
-    // Должен ли король убегать?
+    // Проверка на шах/шахмат
     if (reachingEnemyCells.length) {
       const canMove = this.movesManager.canMoveFromCell(kingCell);
+      [this.gameInfo.priorityTargetCell] = reachingEnemyCells;
 
       if (canMove) {
         return ChessGameStates.Check; // Шах
@@ -248,8 +259,11 @@ export default class ChessboardManager {
         return ChessGameStates.Check; // Шах
       }
 
-      return ChessGameStates.Checkmate; // Шах и мат
+      return ChessGameStates.Checkmate; // Шахмат
     }
+
+    // Короля никто не бьет
+    this.gameInfo.priorityTargetCell = undefined;
 
     // Проверка на ничью
     const teamCells = this.getOneTeamCells(teamColor);
@@ -321,47 +335,35 @@ export default class ChessboardManager {
     }
 
     cell.status = CellStatus.Active;
-
-    // Данная ф-я устанавливает на клетки обработчики
-    // для перемещения фигур
-    const process: ChessProcessPredicate = (current: ICell, next: ICell) => {
-      const options = {
-        postMoveAction: () => {
-          this.switchPlayer();
-          this.updateAllCellComponentsStates();
-        },
-      };
-
-      this.movesManager.setOnMoveAction(current, next, options);
-
-      return true; // указываем, что процесс не будет прерываться
-    };
-
     const enemyColor = cell.figure.color === Colors.Black ? Colors.White : Colors.Black;
 
-    switch (cell.figure.figureName) {
-      case FigureNames.Rook:
-        this.movesManager.processForRookPatterns(cell, enemyColor, process);
-        break;
-      case FigureNames.Knight:
-        this.movesManager.processForKnightPatterns(cell, enemyColor, process);
-        break;
-      case FigureNames.Bishop:
-        this.movesManager.processForBishopPatterns(cell, enemyColor, process);
-        break;
-      case FigureNames.Queen:
-        this.movesManager.processForQueenPatterns(cell, enemyColor, process);
-        break;
-      case FigureNames.King:
-        this.movesManager.processForKingPatterns(cell, enemyColor, process);
-        break;
-      case FigureNames.Pawn:
-        this.movesManager.processForPawnPatterns(cell, enemyColor, process);
-        break;
-      default:
-        throw new Error('Unknown FigureName');
-    }
+    // Данная ф-я устанавливает на клетки обработчики для перемещения фигур
+    const process: ChessProcessPredicate = (current: ICell, next: ICell) => {
+      // Для короля проверяем следующую клетку на безопасность
+      if (current.figure?.figureName === FigureNames.King) {
+        const reachingEnemies = this.movesManager.getReachingEnemyCells(next, enemyColor, current);
+        if (reachingEnemies.length) {
+          return true; // продолжить обработку
+        }
+      }
 
+      if (!this.gameInfo.priorityTargetCell
+        || this.gameInfo.priorityTargetCell === next
+        || current.figure?.figureName === FigureNames.King
+      ) {
+        const options = {
+          postMoveAction: () => {
+            this.switchPlayer();
+            this.updateAllCellComponentsStates();
+          },
+        };
+        this.movesManager.setOnMoveAction(current, next, options);
+      }
+
+      return true; // продолжить обработку
+    };
+
+    this.movesManager.processForCellsFigurePattern(cell, enemyColor, process);
     this.selected = true;
     this.lastSelectedCell = cell;
   }
@@ -372,5 +374,51 @@ export default class ChessboardManager {
   private cancelSelect() {
     this.selected = false;
     this.setDefaultCellsState();
+  }
+
+  /**
+   * Проверяет, можно ли фигурой из указанной клетки атаковать приоритетную цель.
+   * Приоритетная цель - это клетка, которая является угрозой для короля текущей команды.
+   * @param cell Клетка из которой ищем ход к приоритетной цели.
+   * @returns true, если цель можно атаковать, иначе - false.
+   */
+  private canBeatPriorityTarget(cell: ICell): boolean {
+    const { priorityTargetCell } = this.gameInfo;
+
+    if (!priorityTargetCell) {
+      throw new Error('Priority target should be set for this method invoking.');
+    }
+
+    if (!priorityTargetCell.figure) {
+      throw new Error('Priority target must has a figure inside.');
+    }
+
+    if (!cell.figure) {
+      throw new Error('Cell should has a figure inside.');
+    }
+
+    if (cell.figure.color === priorityTargetCell.figure?.color) {
+      throw new Error('Figure in cell can beat priorityTargetCell\'s figure'
+        + 'only if figures in these cells are enemies for each other');
+    }
+
+    let canBeat = false;
+
+    const priorityTargetCellSearchProcess
+      : ChessProcessPredicate = (current: ICell, next: ICell) => {
+        if (next === priorityTargetCell) {
+          canBeat = true;
+          return false;
+        }
+        return true;
+      };
+
+    this.movesManager.processForCellsFigurePattern(
+      cell,
+      priorityTargetCell.figure.color,
+      priorityTargetCellSearchProcess,
+    );
+
+    return canBeat;
   }
 }

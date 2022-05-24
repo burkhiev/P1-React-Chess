@@ -1,6 +1,6 @@
 import { Colors } from '../../services/enums/Colors';
-import { FigureNames } from '../../services/enums/FigureNames';
-import { IFigure } from '../interfaces/IFigure';
+import { FigureNames } from './FigureNames';
+import { IFigure } from './IFigure';
 
 export default class Queen implements IFigure {
   readonly figureName: FigureNames;

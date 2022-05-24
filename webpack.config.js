@@ -35,7 +35,7 @@ module.exports = {
           }
         ],
         include: [
-          path.resolve(__dirname, 'src', 'css')
+          path.resolve(__dirname, 'src')
         ],
       }
     ]
@@ -56,7 +56,6 @@ module.exports = {
       './dist/',
       './.husky/',
       './.vscode/',
-      './static/',
       './**/*.json',
       './**/*.html',
       './*.js'

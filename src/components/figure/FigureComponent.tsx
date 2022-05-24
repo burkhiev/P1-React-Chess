@@ -1,10 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
 
-import { Colors } from '../services/enums/Colors';
-import { FigureNames } from '../services/enums/FigureNames';
-import { FigureImageSourcesManager } from '../services/FigureImageSourcesManager';
-import { getImageContainerCss, getImageCss } from './CellImageCss';
+import { Colors } from '../../services/enums/Colors';
+import { FigureNames } from '../../models/figures/FigureNames';
+import { FigureImageSourcesManager } from '../../services/figure/FigureImageSourcesManager';
+import FigureCssManager from './FigureCssManager';
 
 export interface IFigureComponentProps {
   figureName: FigureNames,
@@ -16,8 +16,8 @@ export default function FigureComponent(props: IFigureComponentProps) {
   const figureImg = FigureImageSourcesManager
     .getFigureImageSource(figureName, figureColor);
 
-  const rawImgContainerCss = classNames(getImageContainerCss());
-  const rawImgCss = classNames(getImageCss());
+  const rawImgContainerCss = classNames(FigureCssManager.getImageContainerCss());
+  const rawImgCss = classNames(FigureCssManager.getImageCss());
 
   const altText = `${Colors[figureColor]} ${FigureNames[figureName]}`;
 

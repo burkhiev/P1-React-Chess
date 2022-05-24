@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 
-import '../css/components/dot.css';
+import './dot.css';
 
 function getDotCss() {
   return {

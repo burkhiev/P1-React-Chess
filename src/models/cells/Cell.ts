@@ -1,7 +1,7 @@
-import { CellStatus } from '../services/enums/CellStates';
-import { Colors } from '../services/enums/Colors';
-import { ICell } from './interfaces/ICell';
-import { IFigure } from './interfaces/IFigure';
+import { CellStatus } from './CellStates';
+import { Colors } from '../../services/enums/Colors';
+import { ICell } from './ICell';
+import { IFigure } from '../figures/IFigure';
 
 export default class Cell implements ICell {
   figure: IFigure | undefined;
@@ -26,7 +26,7 @@ export default class Cell implements ICell {
     this.col = col;
   }
 
-  updateCellComponentStates = () => { };
+  updateCellComponentStates = undefined;
 
-  action = () => { };
+  action = undefined;
 }

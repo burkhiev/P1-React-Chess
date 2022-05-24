@@ -1,10 +1,10 @@
-import Chessboard from '../models/Chessboard';
-import { ICell } from '../models/interfaces/ICell';
-import { ChessProcessPredicate, Action } from '../globals';
-import { FigureNames } from './enums/FigureNames';
-import Pawn from '../models/figures/Pawn';
-import { Colors } from './enums/Colors';
-import { CellStatus } from './enums/CellStates';
+import Chessboard from '../../models/chessboards/Chessboard';
+import { ICell } from '../../models/cells/ICell';
+import { ChessProcessPredicate, Action } from '../../globals';
+import { FigureNames } from '../../models/figures/FigureNames';
+import Pawn from '../../models/figures/Pawn';
+import { Colors } from '../enums/Colors';
+import { CellStatus } from '../../models/cells/CellStates';
 
 interface IMoveActionOptions {
   preMoveAction?: () => void,
@@ -67,17 +67,6 @@ export default class ChessMovesManager {
     if (to.figure?.figureName === FigureNames.King) {
       // Короля нельзя бить.
       throw new Error('You couldn\'t set move action on cell which has the King.');
-    }
-
-    // Для Короля необходимо убедиться в безопасности хода.
-    if (from.figure && from.figure?.figureName === FigureNames.King) {
-      const { color } = from.figure;
-      const enemyColor = color === Colors.White ? Colors.Black : Colors.White;
-
-      if (this.getReachingEnemyCells(to, enemyColor, from)) {
-        // Король не в безопасности, поэтому не устанавливаем никакого действия.
-        return;
-      }
     }
 
     if (to.figure) {
@@ -405,6 +394,52 @@ export default class ChessMovesManager {
   }
 
   /**
+   * Обрабатывает доступные ходы для фигуры внутри указанной клетки.
+   * Клетка указанная 1-ым параметром не учитывается.
+   * @param cell Клетка, из которой ищем ходы.
+   * @param enemyColor Цвет противника. Данный параметр используется
+   * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
+   * @param process Метод, обрабатывающий любые 2 клетки.
+   * Если нужно прервать обработку возвращает false, иначе - true.
+   * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
+   * Используется для корректного расчета безопасного хода короля,
+   * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
+   */
+  processForCellsFigurePattern(
+    cell: ICell,
+    enemyColor: Colors,
+    process: ChessProcessPredicate,
+    ignoredCell?: ICell,
+  ) {
+    if (!cell.figure) {
+      throw new Error('Cell should has a figure inside.');
+    }
+
+    switch (cell.figure.figureName) {
+      case FigureNames.Rook:
+        this.processForRookPatterns(cell, enemyColor, process, ignoredCell);
+        break;
+      case FigureNames.Knight:
+        this.processForKnightPatterns(cell, enemyColor, process);
+        break;
+      case FigureNames.Bishop:
+        this.processForBishopPatterns(cell, enemyColor, process, ignoredCell);
+        break;
+      case FigureNames.Queen:
+        this.processForQueenPatterns(cell, enemyColor, process, ignoredCell);
+        break;
+      case FigureNames.King:
+        this.processForKingPatterns(cell, enemyColor, process, ignoredCell);
+        break;
+      case FigureNames.Pawn:
+        this.processForPawnPatterns(cell, enemyColor, process);
+        break;
+      default:
+        throw new Error('Unknown FigureName');
+    }
+  }
+
+  /**
    * Обрабатывает доступные для Ладьи клетки.
    * Клетка указанная 1-ым параметром не учитывается.
    * @param cell Клетка, из которой ищем ходы.
@@ -683,6 +718,10 @@ export default class ChessMovesManager {
 
           if (!canContinue) return;
         }
+
+        if (nextCell.figure) {
+          break;
+        }
       }
     }
   }
@@ -735,6 +774,10 @@ export default class ChessMovesManager {
           const canContinue = process(cell, nextCell);
 
           if (!canContinue) return;
+        }
+
+        if (nextCell.figure) {
+          break;
         }
       }
     }

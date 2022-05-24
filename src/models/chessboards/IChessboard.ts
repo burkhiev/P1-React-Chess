@@ -1,13 +1,11 @@
-import { ICell } from './interfaces/ICell';
+import { ICell } from '../cells/ICell';
 
-export default class Chessboard {
+export default interface IChessboard {
   /** Все клетки доски в виде матрицы */
   cells: ICell[][];
 
   /** Размер стороны доски. Предполагается, что доска квадратная. */
-  get size(): number { return this.cells.length; }
+  get size(): number;
 
-  constructor(cells: ICell[][]) {
-    this.cells = cells;
-  }
+// eslint-disable-next-line semi
 }

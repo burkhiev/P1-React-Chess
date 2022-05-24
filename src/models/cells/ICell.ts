@@ -1,6 +1,6 @@
-import { CellStatus } from '../../services/enums/CellStates';
+import { CellStatus } from './CellStates';
 import { Colors } from '../../services/enums/Colors';
-import { IFigure } from './IFigure';
+import { IFigure } from '../figures/IFigure';
 
 export interface ICell {
   figure: IFigure | undefined
@@ -9,6 +9,6 @@ export interface ICell {
   row: number,
   col: number,
   get isEmpty(): boolean
-  updateCellComponentStates: () => void
-  action: () => void
+  updateCellComponentStates: (() => void) | undefined
+  action: (() => void) | undefined
 }

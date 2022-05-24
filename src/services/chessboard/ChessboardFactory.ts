@@ -1,15 +1,14 @@
-import Cell from '../models/Cell';
-import Chessboard from '../models/Chessboard';
-import Bishop from '../models/figures/Bishop';
-import King from '../models/figures/King';
-import Knight from '../models/figures/Knight';
-import Pawn from '../models/figures/Pawn';
-import Queen from '../models/figures/Queen';
-import Rook from '../models/figures/Rook';
-import { Colors } from './enums/Colors';
-import { ICell } from '../models/interfaces/ICell';
-
-import { IS_TEST } from '../globals';
+import Cell from '../../models/cells/Cell';
+import Chessboard from '../../models/chessboards/Chessboard';
+import Bishop from '../../models/figures/Bishop';
+import King from '../../models/figures/King';
+import Knight from '../../models/figures/Knight';
+import Pawn from '../../models/figures/Pawn';
+import Queen from '../../models/figures/Queen';
+import Rook from '../../models/figures/Rook';
+import { Colors } from '../enums/Colors';
+import { ICell } from '../../models/cells/ICell';
+import IChessboard from '../../models/chessboards/IChessboard';
 
 export default class ChessboardFactory {
   private static size: number = 8;
@@ -21,14 +20,25 @@ export default class ChessboardFactory {
   static getNewBoard(): Chessboard {
     const chessboard = this.getClearBoard();
 
-    if (IS_TEST) {
-      this.specificTestingFill(chessboard);
-    } else {
-      this.fillWithWhiteFigures(chessboard);
-      this.fillWithBlackFigures(chessboard);
-    }
+    this.fillWithBlackFigures(chessboard);
+    this.fillWithWhiteFigures(chessboard);
 
     return chessboard;
+  }
+
+  /**
+   * Заполняет указанную шахматную доску фигурами в специфичном порядке.
+   * Данный метод используется для ручного тестирования.
+   * @param chessboard Заполняемая шахматная доска.
+   */
+  private static specificFill(chessboard: IChessboard) {
+    const { cells } = chessboard;
+
+    cells[0][1].figure = new King(Colors.Black);
+    cells[0][7].figure = new Rook(Colors.Black);
+    cells[7][7].figure = new Rook(Colors.Black);
+
+    cells[2][1].figure = new King(Colors.White);
   }
 
   /**
@@ -61,26 +71,10 @@ export default class ChessboardFactory {
   }
 
   /**
-   * Специальный заполнитель. Служит для целей тестирования.
-   * @param chessboard шахматная доска
-   */
-  private static specificTestingFill(chessboard: Chessboard) {
-    const { cells } = chessboard;
-
-    // chessboard.currentMove.color = Colors.Black;
-
-    cells[0][0].figure = new King(Colors.Black);
-
-    cells[2][0].figure = new King(Colors.White);
-    cells[1][2].figure = new Rook(Colors.White);
-    // cells[2][2].figure = new Rook(Colors.White);
-  }
-
-  /**
      * Заполняет белыми фигурами полученную доску
      * @param {Chessboard} chessboard Заполняемая доска
      */
-  private static fillWithWhiteFigures(chessboard: Chessboard) {
+  private static fillWithWhiteFigures(chessboard: IChessboard) {
     const { cells } = chessboard;
 
     // заполнение пешками
@@ -109,7 +103,7 @@ export default class ChessboardFactory {
      * Заполняет черными фигурами полученную доску
      * @param {Chessboard} chessboard Заполняемая доска
      */
-  private static fillWithBlackFigures(chessboard: Chessboard) {
+  private static fillWithBlackFigures(chessboard: IChessboard) {
     const { cells } = chessboard;
 
     // заполнение пешками

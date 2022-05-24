@@ -1,8 +1,8 @@
 import React from 'react';
 import classnames from 'classnames';
 
-import ErrorBoundary from './components/ErrorBoundary';
-import ChessboardComponent from './components/ChessboardComponent';
+import ErrorBoundary from './components/shared/ErrorBoundary';
+import ChessboardComponent from './components/chessboard/ChessboardComponent';
 
 const classes = classnames(
   'container',
