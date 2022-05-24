@@ -6,5 +6,6 @@ export enum ChessGameStates {
     Check = 'Check',
     Mate = 'Mate',
     Checkmate = 'Checkmate',
-    InProcess = 'InProcess'
+    InProcess = 'InProcess',
+    Draw = 'Draw'
 }

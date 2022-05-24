@@ -22,7 +22,7 @@ export default class ChessboardFactory {
     const chessboard = this.getClearBoard();
 
     if (IS_TEST) {
-      this.specificFill(chessboard);
+      this.specificTestingFill(chessboard);
     } else {
       this.fillWithWhiteFigures(chessboard);
       this.fillWithBlackFigures(chessboard);
@@ -35,7 +35,7 @@ export default class ChessboardFactory {
      * Создает чистую шахматную доску заполненную клетками
      * @returns шахматная доска
      */
-  private static getClearBoard(): Chessboard {
+  static getClearBoard(): Chessboard {
     const cells: ICell[][] = [];
 
     let colorCounter = 0;
@@ -64,16 +64,16 @@ export default class ChessboardFactory {
    * Специальный заполнитель. Служит для целей тестирования.
    * @param chessboard шахматная доска
    */
-  private static specificFill(chessboard: Chessboard) {
+  private static specificTestingFill(chessboard: Chessboard) {
     const { cells } = chessboard;
 
     // chessboard.currentMove.color = Colors.Black;
 
-    cells[0][1].figure = new King(Colors.Black);
+    cells[0][0].figure = new King(Colors.Black);
 
     cells[2][0].figure = new King(Colors.White);
     cells[1][2].figure = new Rook(Colors.White);
-    cells[2][2].figure = new Rook(Colors.White);
+    // cells[2][2].figure = new Rook(Colors.White);
   }
 
   /**

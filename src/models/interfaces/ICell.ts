@@ -10,5 +10,5 @@ export interface ICell {
   col: number,
   get isEmpty(): boolean
   updateCellComponentStates: () => void
-  onAction: () => void
+  action: () => void
 }

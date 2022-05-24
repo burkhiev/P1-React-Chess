@@ -36,7 +36,7 @@
         // Отключение используется для установки слушателя на <div> элемент(Клетка доски).
         "jsx-a11y/no-noninteractive-element-interactions": "off",
 
-        // Позволить использовать синтаксис jsx в .tsx файлах.
+        // Разрешить использовать синтаксис jsx в .tsx файлах.
         "react/jsx-filename-extension": [
             0,
             {
@@ -53,7 +53,11 @@
             }
         ],
 
-        "no-restricted-globals":"off"
+        // Для использования confirm()
+        "no-restricted-globals":"off",
+        
+        // continue - это хороший способ уменьшить вложенность кода.
+        "no-continue": "off"
     },
     "ignorePatterns":[
         "/*.js", // webpack.config.js

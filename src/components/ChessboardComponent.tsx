@@ -3,13 +3,14 @@ import { nanoid } from '@reduxjs/toolkit';
 import classNames from 'classnames';
 
 import CellComponent from './CellComponent';
-import ChessboardFactory from '../services/ChessboardFactory';
 import { Colors } from '../services/enums/Colors';
 
 import '../css/components/chessboard.css';
 import '../css/shared.css';
 import { ChessGameStates } from '../services/enums/ChessGameStates';
-import ChessConfirms from '../services/ChessConfirms';
+import AppConfirms from '../services/ChessConfirms';
+import ChessboardManager from '../services/ChessboardManager';
+import ChessboardFactory from '../services/ChessboardFactory';
 
 const getDefaultChessboardStatusBarCss = () => ({
   'py-4': true,
@@ -29,34 +30,41 @@ const getDefaultChessboardTeamHeaderCss = () => ({
 });
 
 export default function ChessboardComponent() {
-  const [chessboard, setChessboard] = useState(ChessboardFactory.getNewBoard());
-  const [gameState, setGameState] = useState(ChessGameStates.Default);
+  const [chessManager] = useState(new ChessboardManager(ChessboardFactory.getNewBoard()));
+  const [cells, setCells] = useState(chessManager.cells);
+  const [gameInfo, setGameInfo] = useState(chessManager.gameInfo);
   const [currentColor, setCurrentColor] = useState(Colors.White);
 
+  // Необходимо выделить gameState отдельно от gameInfo,
+  // чтобы была возможность обновить компонент после изменения gameState.
+  const [gameState, setGameState] = useState(chessManager.gameInfo.gameState);
+
   function setDefaultComponentState() {
-    setChessboard(ChessboardFactory.getNewBoard());
-    setGameState(ChessGameStates.Default);
+    const chessboard = ChessboardFactory.getNewBoard();
+    setCells(chessManager.setNewChessboard(chessboard));
+    setGameInfo(chessManager.gameInfo);
+    setGameState(chessManager.gameInfo.gameState);
     setCurrentColor(Colors.White);
   }
 
   const startNewGameBtnOnClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (ChessConfirms.confirmRestartGame()) {
+    if (AppConfirms.confirmRestartGame()) {
       setDefaultComponentState();
     }
   };
 
-  const startNewGameAtEndBtnOnClick = (e: React.MouseEvent) => {
+  const startNewGameAtTheEndBtnOnClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setDefaultComponentState();
   };
 
-  chessboard.onSwitchPlayerCallback = () => {
-    setCurrentColor(chessboard.gameInfo.currentTeamColor);
+  chessManager.onSwitchPlayerCallback = () => {
+    setCurrentColor(gameInfo.currentTeamColor);
   };
 
-  chessboard.onGameEndCallback = () => {
-    setGameState(chessboard.gameInfo.gameState);
+  chessManager.onGameEndCallback = () => {
+    setGameState(gameInfo.gameState);
   };
 
   const whiteTeamHeaderCss = getDefaultChessboardTeamHeaderCss();
@@ -87,7 +95,8 @@ export default function ChessboardComponent() {
 
   let statusBar: ReactElement;
   if (gameState === ChessGameStates.Default
-    || gameState === ChessGameStates.InProcess) {
+    || gameState === ChessGameStates.InProcess
+    || gameState === ChessGameStates.Check) {
     statusBar = (
       <div className="row m-2 p-2">
         <div className={rawWhiteTeamHeaderCss}>
@@ -99,22 +108,32 @@ export default function ChessboardComponent() {
       </div>
     );
   } else {
+    let endGameHeader = (
+      <>
+        {Colors[currentColor]}
+        {' '}
+        team win!
+      </>
+    );
+
+    if (gameState === ChessGameStates.Draw) {
+      endGameHeader = <>Draw</>;
+    }
+
     statusBar = (
       <div className="row m-2 p-2">
         <h3>
-          {Colors[currentColor]}
-          {' '}
-          team win!
+          {endGameHeader}
           <br />
-          Do you want to play again?
         </h3>
+        <span>Do you want to play again?</span>
         <div className="d-flex justify-content-center">
           <button
             type="button"
             id="startNewGameAtEndBtn"
             name="startNewGameAtEndBtn"
-            className="col-4 btn btn-outline-warning mt-3"
-            onClick={startNewGameAtEndBtnOnClick}
+            className="col-4 btn btn-warning mt-3"
+            onClick={startNewGameAtTheEndBtnOnClick}
           >
             Yes, I do!
           </button>
@@ -123,7 +142,7 @@ export default function ChessboardComponent() {
     );
   }
 
-  const contentArray = chessboard.cells.map((row) => {
+  const contentArray = cells.map((row) => {
     const result = (
       <div
         key={nanoid()}
@@ -137,8 +156,8 @@ export default function ChessboardComponent() {
             >
               <CellComponent
                 cell={cell}
-                onSelect={() => chessboard.onAction(cell)}
-                currentStep={chessboard.gameInfo}
+                onSelect={() => chessManager.onAction(cell)}
+                currentStep={gameInfo}
               />
             </div>
           ))

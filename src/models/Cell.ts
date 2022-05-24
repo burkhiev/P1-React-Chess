@@ -28,5 +28,5 @@ export default class Cell implements ICell {
 
   updateCellComponentStates = () => { };
 
-  onAction = () => { };
+  action = () => { };
 }

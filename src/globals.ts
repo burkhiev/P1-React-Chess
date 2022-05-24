@@ -2,7 +2,7 @@
 import { ICell } from './models/interfaces/ICell';
 import { Colors } from './services/enums/Colors';
 
-export const IS_TEST: boolean = true;
+export const IS_TEST: boolean = false;
 
 /**
  * Методы данного типа обрабатывают 2 клетки и

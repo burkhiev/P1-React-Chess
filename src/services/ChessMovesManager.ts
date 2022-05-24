@@ -6,25 +6,47 @@ import Pawn from '../models/figures/Pawn';
 import { Colors } from './enums/Colors';
 import { CellStatus } from './enums/CellStates';
 
+interface IMoveActionOptions {
+  preMoveAction?: () => void,
+  postMoveAction?: () => void,
+}
+
+/**
+ * Данный класс отвечает за логику передвижения шахматных фигур
+ */
 export default class ChessMovesManager {
+  /** Шахматная доска */
   private chessboard: Chessboard;
+
+  /**
+   * Устанавливает для текущего экземпляра класса указанную шахматную доску.
+   * @param chessboard Шахматная доска.
+   */
+  setChessboard(chessboard: Chessboard) {
+    if (!chessboard) {
+      throw new Error('\'chessboard\' argument cannot be empty.');
+    }
+
+    this.chessboard = chessboard;
+  }
 
   constructor(chessboard: Chessboard) {
     this.chessboard = chessboard;
 
-    this.processVerticalAndHorizontalSteps = this.processVerticalAndHorizontalSteps.bind(this);
-    this.processDiagonalSteps = this.processDiagonalSteps.bind(this);
+    this.processForVerticalAndHorizontalPatterns = this
+      .processForVerticalAndHorizontalPatterns.bind(this);
+    this.processForDiagonalPatterns = this.processForDiagonalPatterns.bind(this);
 
-    this.processRookSteps = this.processRookSteps.bind(this);
-    this.processBishopSteps = this.processBishopSteps.bind(this);
-    this.processQueenSteps = this.processQueenSteps.bind(this);
-    this.processKnightSteps = this.processKnightSteps.bind(this);
-    this.processKingSteps = this.processKingSteps.bind(this);
-    this.processPawnSteps = this.processPawnSteps.bind(this);
+    this.processForRookPatterns = this.processForRookPatterns.bind(this);
+    this.processForBishopPatterns = this.processForBishopPatterns.bind(this);
+    this.processForQueenPatterns = this.processForQueenPatterns.bind(this);
+    this.processForKnightPatterns = this.processForKnightPatterns.bind(this);
+    this.processForKingPatterns = this.processForKingPatterns.bind(this);
+    this.processForPawnPatterns = this.processForPawnPatterns.bind(this);
 
     this.setOnMoveAction = this.setOnMoveAction.bind(this);
     this.canMoveFromCell = this.canMoveFromCell.bind(this);
-    this.doEnemyReachesSpecialCell = this.doEnemyReachesSpecialCell.bind(this);
+    this.getReachingEnemyCells = this.getReachingEnemyCells.bind(this);
     this.isEnemies = this.isEnemies.bind(this);
     this.isTeammates = this.isTeammates.bind(this);
     this.findKingCell = this.findKingCell.bind(this);
@@ -37,16 +59,14 @@ export default class ChessMovesManager {
    * @param options (Необязательный параметр) Хранит в себе действия, которые могут выполняться
    * перед или после передвижения фигуры
    */
-  setOnMoveAction(
-    from: ICell,
-    to: ICell,
-    options?: {
-            preMoveAction?: () => void,
-            postMoveAction?: () => void,
-        },
-  ) {
+  setOnMoveAction(from: ICell, to: ICell, options?: IMoveActionOptions) {
     if (this.isTeammates(from, to)) {
       throw new Error('You cannot go to an friendly occupied cell.');
+    }
+
+    if (to.figure?.figureName === FigureNames.King) {
+      // Короля нельзя бить.
+      throw new Error('You couldn\'t set move action on cell which has the King.');
     }
 
     // Для Короля необходимо убедиться в безопасности хода.
@@ -54,7 +74,7 @@ export default class ChessMovesManager {
       const { color } = from.figure;
       const enemyColor = color === Colors.White ? Colors.Black : Colors.White;
 
-      if (this.doEnemyReachesSpecialCell(to, enemyColor, from)) {
+      if (this.getReachingEnemyCells(to, enemyColor, from)) {
         // Король не в безопасности, поэтому не устанавливаем никакого действия.
         return;
       }
@@ -66,6 +86,18 @@ export default class ChessMovesManager {
       to.status = CellStatus.OnWay;
     }
 
+    to.action = this.getOnMoveAction(from, to, options);
+  }
+
+  /**
+   * Возвращает функцию, предназначающуюся для action поля экземпляра класса Cell.
+   * Данная функция удобна для тестирования.
+   * @param from Клетка, из которой движется фигура.
+   * @param to Клетка, в которую фигура движется.
+   * @param options (Необязательный параметр) Хранит в себе действия, которые могут выполняться
+   * перед или после передвижения фигуры
+   */
+  getOnMoveAction(from: ICell, to: ICell, options?: IMoveActionOptions): () => void {
     // без деконструкции, т.к. options может быть пустым
     let preMoveAction: Action | undefined;
     let postMoveAction: Action | undefined;
@@ -75,7 +107,7 @@ export default class ChessMovesManager {
       postMoveAction = options.postMoveAction;
     }
 
-    to.onAction = () => {
+    return () => {
       if (preMoveAction) {
         preMoveAction();
       }
@@ -96,43 +128,45 @@ export default class ChessMovesManager {
   /**
    * Проверяет, может ли фигура на указанной клетке потенциально совершить любой ход
    * (вне зависимости от цвета текущей команды).
-   * @param cell Проверяемая клетка.
+   * @param origin Проверяемая клетка.
    * @returns Если фигура на указанной клетке потенциально может сделать ход,
    * то возвращает true, иначе - false.
    */
-  canMoveFromCell(cell: ICell): boolean {
-    if (!cell.figure) {
+  canMoveFromCell(origin: ICell): boolean {
+    if (!origin.figure) {
       return false;
     }
 
-    const enemyColor = cell.figure.color === Colors.Black ? Colors.White : Colors.Black;
+    const enemyColor = origin.figure.color === Colors.Black ? Colors.White : Colors.Black;
 
-    // Для записи результата обработчики снизу используют в данную переменную.
+    // Для записи результата callback'и снизу используют в данную переменную.
     let canMove = false;
 
-    if (cell.figure.figureName === FigureNames.King) {
+    if (origin.figure.figureName === FigureNames.King) {
       // Обработка клетки с королём
 
-      // Рассматриваем все клетки вокруг короля. Находятся ли они под ударом?
+      // callback для обработки клеток вокруг короля.
       const processFreePlaceAroundKing: ChessProcessPredicate = (king: ICell, nearKing: ICell) => {
         // Если в клетке рядом стоит союзник, то её необходимо пропустить.
         if (this.isTeammates(king, nearKing)) {
           return true;
         }
 
-        // Проверка, безопасна ли указанная клетка
-        const cellIsSafe = !this.doEnemyReachesSpecialCell(nearKing, enemyColor, king);
+        // Ищем противников, достающих обрабатываемую клетку
+        const reachingEnemiesCells = this.getReachingEnemyCells(nearKing, enemyColor, king);
 
-        if (cellIsSafe) {
+        // Если таковых нет - клетка свободна
+        if (reachingEnemiesCells.length === 0) {
           canMove = true;
           return false; // прерываем обработку
         }
+
         return true;
       };
 
-      this.processKingSteps(cell, enemyColor, processFreePlaceAroundKing);
+      this.processForKingPatterns(origin, enemyColor, processFreePlaceAroundKing);
     } else {
-      // Обработка все остальных клеток
+      // callback для обработки всех остальных клеток
       const processCanMove: ChessProcessPredicate = (currentCell: ICell, nextCell: ICell) => {
         if (!this.isTeammates(currentCell, nextCell)) {
           canMove = true;
@@ -141,21 +175,21 @@ export default class ChessMovesManager {
         return true;
       };
 
-      switch (cell.figure.figureName) {
+      switch (origin.figure.figureName) {
         case FigureNames.Rook:
-          this.processRookSteps(cell, enemyColor, processCanMove);
+          this.processForRookPatterns(origin, enemyColor, processCanMove);
           break;
         case FigureNames.Knight:
-          this.processKnightSteps(cell, enemyColor, processCanMove);
+          this.processForKnightPatterns(origin, enemyColor, processCanMove);
           break;
         case FigureNames.Bishop:
-          this.processDiagonalSteps(cell, enemyColor, processCanMove);
+          this.processForDiagonalPatterns(origin, enemyColor, processCanMove);
           break;
         case FigureNames.Queen:
-          this.processQueenSteps(cell, enemyColor, processCanMove);
+          this.processForQueenPatterns(origin, enemyColor, processCanMove);
           break;
         case FigureNames.Pawn:
-          this.processPawnSteps(cell, enemyColor, processCanMove);
+          this.processForPawnPatterns(origin, enemyColor, processCanMove);
           break;
         default:
           throw new Error('Unknown FigureName value.');
@@ -166,117 +200,99 @@ export default class ChessMovesManager {
   }
 
   /**
-     * Проверяет клетку на доступность для фигур указанного цвета.
-     * Фигура, которая находится в клетке, указанной 1-ым параметром,
-     * не учитывается.
-     * @param cell Клетка, проверяемая на доступность.
-     * @param enemyColor Цвет фигур.
-     * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
-     * Используется для корректного расчета безопасного хода короля,
-     * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
-     * @returns true, если хотя бы одна фигура указанного цвета достает клетку. false - если нет.
-     */
-  doEnemyReachesSpecialCell(
-    cell: ICell,
-    enemyColor: Colors,
-    ignoredCell?: ICell,
-  ): boolean {
+   * Проверяет клетку на доступность для атаки фигурами указанного цвета.
+   * Если одна из фигур указанного цвета, находится в клетке,
+   * передаваемой 1-ым параметром, то она не учитывается.
+   * @param cell Клетка, проверяемая на доступность для атаки.
+   * @param enemyColor Цвет фигур.
+   * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
+   * Используется для корректного расчета безопасного хода короля,
+   * относительно вражеских фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
+   * @returns Массив клеток, которые содержат фигуры цвета enemyColor,
+   * а также способные достичь указанной клетки.
+   */
+  getReachingEnemyCells(cell: ICell, enemyColor: Colors, ignoredCell?: ICell): ICell[] {
     if (!cell || !enemyColor) {
       throw new Error('Parameters cannot be null or undefined.');
     }
 
-    let enemyFound = false;
+    const foundedEnemyCells: ICell[] = [];
 
     // Поиск по горизонтали и вертикали.
     // Поиск ведётся по всей длине, поэтому короли рассматриваются отдельно.
     const findEnemyRooksAndQueens: ChessProcessPredicate = (origin: ICell, next: ICell) => {
-      const enemyReach = next.figure?.color === enemyColor
+      const enemyReaches = next.figure?.color === enemyColor
                 && (
                   next.figure?.figureName === FigureNames.Rook
                     || next.figure?.figureName === FigureNames.Queen
                 );
 
-      if (enemyReach) {
-        enemyFound = true;
-        return false; // прерывание поиска
+      if (enemyReaches) {
+        foundedEnemyCells.push(next);
       }
       return true;
     };
 
-    this.processVerticalAndHorizontalSteps(
+    this.processForVerticalAndHorizontalPatterns(
       cell,
       enemyColor,
       findEnemyRooksAndQueens,
       ignoredCell,
     );
-    if (enemyFound) {
-      return true;
-    }
 
     // Поиск по диагонали
     // Поиск ведётся по всей длине, поэтому пешки и короли рассматриваются отдельно.
     const findEnemyBishopsAndQueens: ChessProcessPredicate = (origin: ICell, next: ICell) => {
-      const enemyReach = next.figure?.color === enemyColor
+      const enemyReaches = next.figure?.color === enemyColor
                 && (
                   next.figure?.figureName === FigureNames.Bishop
                     || next.figure?.figureName === FigureNames.Queen
                 );
 
-      if (enemyReach) {
-        enemyFound = true;
-        return false; // прерывание поиска
+      if (enemyReaches) {
+        foundedEnemyCells.push(next);
       }
       return true;
     };
 
-    this.processDiagonalSteps(
+    this.processForDiagonalPatterns(
       cell,
       enemyColor,
       findEnemyBishopsAndQueens,
       ignoredCell,
     );
-    if (enemyFound) {
-      return true;
-    }
 
     // Поиск Королей
     const findEnemyKings: ChessProcessPredicate = (origin: ICell, next: ICell) => {
-      const enemyReach = next.figure?.color === enemyColor
+      const enemyReaches = next.figure?.color === enemyColor
                 && next.figure?.figureName === FigureNames.King;
 
-      if (enemyReach) {
-        enemyFound = true;
-        return false; // прерывание поиска
+      if (enemyReaches) {
+        foundedEnemyCells.push(next);
       }
       return true;
     };
 
-    this.processKingSteps(
+    this.processForKingPatterns(
       cell,
       enemyColor,
       findEnemyKings,
+      ignoredCell,
     );
-    if (enemyFound) {
-      return true;
-    }
 
     // Поиск Коней
     const findEnemyKnights: ChessProcessPredicate = (origin: ICell, next: ICell) => {
       if (next.figure?.color === enemyColor && next.figure?.figureName === FigureNames.Knight) {
-        enemyFound = true;
-        return false; // прерывание поиска
+        foundedEnemyCells.push(next);
       }
       return true;
     };
 
-    this.processKnightSteps(
+    this.processForKnightPatterns(
       cell,
       enemyColor,
       findEnemyKnights,
     );
-    if (enemyFound) {
-      return true;
-    }
 
     // Поиск Пешек
     const isDirValid = (q: number) => q >= 0 && q < this.chessboard.size;
@@ -292,21 +308,19 @@ export default class ChessMovesManager {
         const leftUpperCell = cells[row][col];
 
         if (leftUpperCell.figure && leftUpperCell.figure.color === enemyColor) {
-          enemyFound = true;
+          foundedEnemyCells.push(leftUpperCell);
         }
       }
 
-      if (!enemyFound) {
-        // Смотрим пешку справа наверху
-        row = cell.row - 1;
-        col = cell.col + 1;
+      // Смотрим пешку справа наверху
+      row = cell.row - 1;
+      col = cell.col + 1;
 
-        if (isDirValid(row) && isDirValid(col)) {
-          const rightUpperCell = cells[row][col];
+      if (isDirValid(row) && isDirValid(col)) {
+        const rightUpperCell = cells[row][col];
 
-          if (rightUpperCell.figure && rightUpperCell.figure.color === enemyColor) {
-            enemyFound = true;
-          }
+        if (rightUpperCell.figure && rightUpperCell.figure.color === enemyColor) {
+          foundedEnemyCells.push(rightUpperCell);
         }
       }
 
@@ -320,33 +334,31 @@ export default class ChessMovesManager {
         const leftLowerCell = cells[row][col];
 
         if (leftLowerCell.figure && leftLowerCell.figure.color === enemyColor) {
-          enemyFound = true;
+          foundedEnemyCells.push(leftLowerCell);
         }
       }
 
-      if (!enemyFound) {
-        // Смотрим пешку справа внизу
-        row = cell.row + 1;
-        col = cell.col + 1;
+      // Смотрим пешку справа внизу
+      row = cell.row + 1;
+      col = cell.col + 1;
 
-        if (isDirValid(row) && isDirValid(col)) {
-          const rightLowerCell = cells[row][col];
+      if (isDirValid(row) && isDirValid(col)) {
+        const rightLowerCell = cells[row][col];
 
-          if (rightLowerCell.figure && rightLowerCell.figure.color === enemyColor) {
-            enemyFound = true;
-          }
+        if (rightLowerCell.figure && rightLowerCell.figure.color === enemyColor) {
+          foundedEnemyCells.push(rightLowerCell);
         }
       }
     }
 
-    return enemyFound;
+    return foundedEnemyCells;
   }
 
   /**
-     * Выполняет поиск короля указанного цвета.
-     * @param color Цвет искомого короля.
-     * @returns Клетка с королём.
-     */
+   * Выполняет поиск короля указанного цвета.
+   * @param color Цвет искомого короля.
+   * @returns Клетка с королём.
+   */
   findKingCell(color: Colors): ICell {
     const { cells } = this.chessboard;
 
@@ -358,8 +370,8 @@ export default class ChessMovesManager {
         const { figure } = cell;
 
         const kingFound = figure
-                    && figure.figureName === FigureNames.King
-                    && figure.color === color;
+          && figure.figureName === FigureNames.King
+          && figure.color === color;
 
         if (kingFound) {
           return cell;
@@ -371,77 +383,101 @@ export default class ChessMovesManager {
   }
 
   /**
-     * Определяет враждебность клеток, в зависимости от находящихся на них фигур.
-     * @param from Первая клетка
-     * @param to Вторая клетка
-     * @returns Если на клетках стоят фигуры из противоположных команд,
-     * то возвращает true. Иначе - false.
-     */
+   * Определяет враждебность клеток, в зависимости от находящихся на них фигур.
+   * @param from Первая клетка
+   * @param to Вторая клетка
+   * @returns Если на клетках стоят фигуры из противоположных команд,
+   * то возвращает true. Иначе - false.
+   */
   isEnemies(first: ICell, second: ICell) {
     return first.figure && second.figure && first.figure.color !== second.figure.color;
   }
 
   /**
-     * Определяет дружелюбность клеток, в зависимости от находящихся на них фигур.
-     * @param from Первая клетка
-     * @param to Вторая клетка
-     * @returns Если на клетках стоят фигуры из одной команды,
-     * то возвращает true. Иначе - false.
-     */
+   * Определяет дружелюбность клеток, в зависимости от находящихся на них фигур.
+   * @param from Первая клетка
+   * @param to Вторая клетка
+   * @returns Если на клетках стоят фигуры из одной команды,
+   * то возвращает true. Иначе - false.
+   */
   isTeammates(first: ICell, second: ICell) {
     return (first.figure && second.figure && first.figure.color === second.figure.color);
   }
 
   /**
-     * Отмечает доступные для Ладьи клетки.
-     * Клетка указанная 1-ым параметром не учитывается.
-     * @param cell Клетка, из которой ищем ходы.
-     * @param enemyColor Цвет противника. Данный параметр используется
-     * для расчета пути из клетки, в которой стоит противник.
-     * @param process Метод, обрабатывающий любые 2 клетки.
-     * Если нужно прервать обработку возвращает false, иначе - true.
-     */
-  processRookSteps(cell: ICell, enemyColor: Colors, process: ChessProcessPredicate) {
-    this.processVerticalAndHorizontalSteps(cell, enemyColor, process);
+   * Обрабатывает доступные для Ладьи клетки.
+   * Клетка указанная 1-ым параметром не учитывается.
+   * @param cell Клетка, из которой ищем ходы.
+   * @param enemyColor Цвет противника. Данный параметр используется
+   * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
+   * @param process Метод, обрабатывающий любые 2 клетки.
+   * Если нужно прервать обработку возвращает false, иначе - true.
+   * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
+   * Используется для корректного расчета безопасного хода короля,
+   * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
+   */
+  processForRookPatterns(
+    cell: ICell,
+    enemyColor: Colors,
+    process: ChessProcessPredicate,
+    ignoredCell?: ICell,
+  ) {
+    this.processForVerticalAndHorizontalPatterns(cell, enemyColor, process, ignoredCell);
   }
 
   /**
-     * Отмечает доступные для Ладьи клетки.
-     * Клетка указанная 1-ым параметром не учитывается.
-     * @param cell Клетка, из которой ищем ходы.
-     * @param enemyColor Цвет противника. Данный параметр используется
-     * для расчета пути из клетки, в которой стоит противник.
-     * @param process Метод, обрабатывающий любые 2 клетки.
-     * Если нужно прервать обработку возвращает false, иначе - true.
-     */
-  processBishopSteps(cell: ICell, enemyColor: Colors, process: ChessProcessPredicate) {
-    this.processDiagonalSteps(cell, enemyColor, process);
+   * Обрабатывает предикатом process доступные для Ладьи клетки.
+   * Клетка указанная 1-ым параметром не учитывается.
+   * @param cell Клетка, из которой ищем ходы.
+   * @param enemyColor Цвет противника. Данный параметр используется
+   * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
+   * @param process Метод, обрабатывающий любые 2 клетки.
+   * Если нужно прервать обработку возвращает false, иначе - true.
+   * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
+   * Используется для корректного расчета безопасного хода короля,
+   * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
+   */
+  processForBishopPatterns(
+    cell: ICell,
+    enemyColor: Colors,
+    process: ChessProcessPredicate,
+    ignoredCell?: ICell,
+  ) {
+    this.processForDiagonalPatterns(cell, enemyColor, process, ignoredCell);
   }
 
   /**
-     * Отмечает доступные для Ферзя клетки.
-     * Клетка указанная 1-ым параметром не учитывается.
-     * @param cell Клетка, из которой ищем ходы.
-     * @param enemyColor Цвет противника. Данный параметр используется
-     * для расчета пути из клетки, в которой стоит противник.
-     * @param process Метод, обрабатывающий любые 2 клетки.
-     * Если нужно прервать обработку возвращает false, иначе - true.
-     */
-  processQueenSteps(cell: ICell, enemyColor: Colors, process: ChessProcessPredicate) {
-    this.processVerticalAndHorizontalSteps(cell, enemyColor, process);
-    this.processDiagonalSteps(cell, enemyColor, process);
+   * Обрабатывает предикатом process доступные для Ферзя клетки.
+   * Клетка указанная 1-ым параметром не учитывается.
+   * @param cell Клетка, из которой ищем ходы.
+   * @param enemyColor Цвет противника. Данный параметр используется
+   * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
+   * @param process Метод, обрабатывающий любые 2 клетки.
+   * Если нужно прервать обработку возвращает false, иначе - true.
+   * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
+   * Используется для корректного расчета безопасного хода короля,
+   * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
+   */
+  processForQueenPatterns(
+    cell: ICell,
+    enemyColor: Colors,
+    process: ChessProcessPredicate,
+    ignoredCell?: ICell,
+  ) {
+    this.processForVerticalAndHorizontalPatterns(cell, enemyColor, process, ignoredCell);
+    this.processForDiagonalPatterns(cell, enemyColor, process, ignoredCell);
   }
 
   /**
-     * Отмечает доступные для Коня клетки.
-     * Клетка указанная 1-ым параметром не учитывается.
-     * @param cell Клетка, из которой ищем ходы.
-     * @param enemyColor Цвет противника. Данный параметр используется
-     * для расчета пути из клетки, в которой стоит противник.
-     * @param process Метод, обрабатывающий любые 2 клетки.
-     * Если нужно прервать обработку возвращает false, иначе - true.
-     */
-  processKnightSteps(cell: ICell, enemyColor: Colors, process: ChessProcessPredicate) {
+   * Обрабатывает предикатом process доступные для Коня клетки.
+   * Клетка указанная 1-ым параметром не учитывается.
+   * @param cell Клетка, из которой ищем ходы.
+   * @param enemyColor Цвет противника. Данный параметр используется
+   * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
+   * @param process Метод, обрабатывающий любые 2 клетки.
+   * Если нужно прервать обработку возвращает false, иначе - true.
+   */
+  processForKnightPatterns(cell: ICell, enemyColor: Colors, process: ChessProcessPredicate) {
     const { size, cells } = this.chessboard;
     const { row, col } = cell;
 
@@ -457,7 +493,7 @@ export default class ChessMovesManager {
       if (isDirValid(nextRow) && isDirValid(nextCol)) {
         const nextCell = cells[nextRow][nextCol];
 
-        if (!nextCell.figure || enemyColor === nextCell.figure.color) {
+        if (nextCell.isEmpty || enemyColor === nextCell.figure?.color) {
           const canContinue = process(cell, nextCell);
 
           if (!canContinue) return;
@@ -467,15 +503,23 @@ export default class ChessMovesManager {
   }
 
   /**
-     * Отмечает доступные для Короля клетки.
-     * Клетка указанная 1-ым параметром не учитывается.
-     * @param cell Клетка, из которой ищем ходы.
-     * @param enemyColor Цвет противника. Данный параметр используется
-     * для расчета пути из клетки, в которой стоит противник.
-     * @param process Метод, обрабатывающий любые 2 клетки.
-     * Если нужно прервать обработку возвращает false, иначе - true.
-     */
-  processKingSteps(cell: ICell, enemyColor: Colors, process: ChessProcessPredicate) {
+   * Обрабатывает предикатом process доступные для Короля клетки.
+   * Клетка указанная 1-ым параметром не учитывается.
+   * @param cell Клетка, из которой ищем ходы.
+   * @param enemyColor Цвет противника. Данный параметр используется
+   * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
+   * @param process Метод, обрабатывающий любые 2 клетки.
+   * Если нужно прервать обработку возвращает false, иначе - true.
+   * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
+   * Используется для корректного расчета безопасного хода короля,
+   * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
+   */
+  processForKingPatterns(
+    cell: ICell,
+    enemyColor: Colors,
+    process: ChessProcessPredicate,
+    ignoredCell?: ICell,
+  ) {
     const { size, cells } = this.chessboard;
     const { row, col } = cell;
 
@@ -495,11 +539,12 @@ export default class ChessMovesManager {
       if (isDirValid(nextRow) && isDirValid(nextCol)) {
         const nextCell = cells[nextRow][nextCol];
 
-        if (!nextCell.figure || enemyColor === nextCell.figure.color) {
-          // const isCellDanger = this.doEnemyFiguresReachSpecialCell(nextCell, )
+        if (nextCell === ignoredCell) {
+          continue;
+        }
 
+        if (nextCell.isEmpty || enemyColor === nextCell.figure?.color) {
           const canContinue = process(cell, nextCell);
-
           if (!canContinue) return;
         }
       }
@@ -507,15 +552,16 @@ export default class ChessMovesManager {
   }
 
   /**
-     * Отмечает доступные для Пешки клетки.
-     * Клетка указанная 1-ым параметром не учитывается.
-     * @param cell Клетка, из которой ищем ходы.
-     * @param enemyColor Цвет противника. Данный параметр используется
-     * для расчета пути из клетки, в которой стоит противник.
-     * @param process Метод, обрабатывающий любые 2 клетки.
-     * Если нужно прервать обработку возвращает false, иначе - true.
-     */
-  processPawnSteps(cell: ICell, enemyColor: Colors, process: ChessProcessPredicate) {
+   * Обрабатывает предикатом process доступные для Пешки клетки.
+   * Клетка указанная 1-ым параметром не учитывается.
+   * @param cell Клетка, из которой ищем ходы.
+   * @param enemyColor Цвет противника. Данный параметр используется
+   * для расчета пути пешки, т.к. пешка имеет различное количество
+   * вариантов ходов в зависимости от наличия противника в некоторых клетках.
+   * @param process Метод, обрабатывающий любые 2 клетки.
+   * Если нужно прервать обработку возвращает false, иначе - true.
+   */
+  processForPawnPatterns(cell: ICell, enemyColor: Colors, process: ChessProcessPredicate) {
     const isNotPawn = !(cell.figure && cell.figure.figureName === FigureNames.Pawn);
     if (isNotPawn) {
       return;
@@ -589,18 +635,18 @@ export default class ChessMovesManager {
   }
 
   /**
-     * Отмечает доступные по вертикали и горизонтали клетки.
-     * Клетка указанная 1-ым параметром не учитывается.
-     * @param cell Клетка, из которой ищем ходы.
-     * @param enemyColor Цвет противника. Данный параметр используется
-     * для расчета пути из клетки, в которой стоит противник.
-     * @param process Метод обработчик.
-     * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
-     * Используется для корректного расчета безопасного хода короля,
-     * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
-     * Если нужно прервать обработку возвращает false, иначе - true.
-     */
-  private processVerticalAndHorizontalSteps(
+   * Обрабатывает предикатом process доступные по вертикали и горизонтали клетки.
+   * Клетка указанная 1-ым параметром не учитывается.
+   * @param cell Клетка, из которой ищем ходы.
+   * @param enemyColor Цвет противника. Данный параметр используется
+   * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
+   * @param process Метод обработчик.
+   * Если нужно прервать обработку возвращает false, иначе - true.
+   * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
+   * Используется для корректного расчета безопасного хода короля,
+   * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
+   */
+  private processForVerticalAndHorizontalPatterns(
     cell: ICell,
     enemyColor: Colors,
     process: ChessProcessPredicate,
@@ -615,41 +661,45 @@ export default class ChessMovesManager {
     for (let d = 0; d < directions.length; d += 1) {
       const [rowD, colD] = directions[d];
 
-      let nextRow = row + rowD;
-      let nextCol = col + colD;
+      let nextRow = row;
+      let nextCol = col;
 
-      while (isDirValid(nextRow) && isDirValid(nextCol)) {
+      while (true) {
+        nextRow += rowD;
+        nextCol += colD;
+
+        if (!(isDirValid(nextRow) && isDirValid(nextCol))) {
+          break;
+        }
+
         const nextCell = cells[nextRow][nextCol];
 
-        if (!nextCell.figure || enemyColor === nextCell.figure.color) {
+        if (nextCell === ignoredCell) {
+          continue;
+        }
+
+        if (nextCell.isEmpty || enemyColor === nextCell.figure?.color) {
           const canContinue = process(cell, nextCell);
 
           if (!canContinue) return;
         }
-
-        if (nextCell.figure && nextCell !== ignoredCell) {
-          break;
-        }
-
-        nextRow += rowD;
-        nextCol += colD;
       }
     }
   }
 
   /**
-     * Отмечает доступные по диагонали клетки.
-     * Клетка указанная 1-ым параметром не учитывается.
-     * @param cell Клетка, из которой ищем ходы.
-     * @param enemyColor Цвет противника. Данный параметр используется
-     * для расчета пути из клетки, в которой стоит противник.
-     * @param process Метод, обрабатывающий любые 2 клетки.
-     * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
-     * Используется для корректного расчета безопасного хода короля,
-     * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
-     * Если нужно прервать обработку возвращает false, иначе - true.
-     */
-  private processDiagonalSteps(
+   * Обрабатывает предикатом process доступные по диагонали клетки.
+   * Клетка указанная 1-ым параметром не учитывается.
+   * @param cell Клетка, из которой ищем ходы.
+   * @param enemyColor Цвет противника. Данный параметр используется
+   * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
+   * @param process Метод, обрабатывающий любые 2 клетки.
+   * Если нужно прервать обработку возвращает false, иначе - true.
+   * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
+   * Используется для корректного расчета безопасного хода короля,
+   * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
+   */
+  private processForDiagonalPatterns(
     cell: ICell,
     enemyColor: Colors,
     process: ChessProcessPredicate,
@@ -664,24 +714,28 @@ export default class ChessMovesManager {
     for (let d = 0; d < directions.length; d += 1) {
       const [rowD, colD] = directions[d];
 
-      let nextRow = row + rowD;
-      let nextCol = col + colD;
+      let nextRow = row;
+      let nextCol = col;
 
-      while (isDirValid(nextRow) && isDirValid(nextCol)) {
+      while (true) {
+        nextRow += rowD;
+        nextCol += colD;
+
+        if (!(isDirValid(nextRow) && isDirValid(nextCol))) {
+          break;
+        }
+
         const nextCell = cells[nextRow][nextCol];
 
-        if (!nextCell.figure || enemyColor === nextCell.figure.color) {
+        if (nextCell === ignoredCell) {
+          continue;
+        }
+
+        if (nextCell.isEmpty || enemyColor === nextCell.figure?.color) {
           const canContinue = process(cell, nextCell);
 
           if (!canContinue) return;
         }
-
-        if (nextCell.figure && nextCell !== ignoredCell) {
-          break;
-        }
-
-        nextRow += rowD;
-        nextCol += colD;
       }
     }
   }
