@@ -40,11 +40,10 @@ export default class CellCssManager {
   }
 
   /**
-     * Составляет список классов для CellComponent
-     * @param props Объект, содержащий параметры
-     * необходимые для составления списка классов.
-     * @returns Список классов для CellComponent.
-     */
+   * Составляет список классов для CellComponent
+   * @param props Объект, содержащий параметры необходимые для составления списка классов.
+   * @returns Список классов для CellComponent.
+   */
   static getPreparedCssClasses(
     figure: IFigure | undefined,
     cellColor: Colors,
@@ -52,24 +51,22 @@ export default class CellCssManager {
     currentStepColor: Colors,
     gameState: ChessGameStates,
   ) {
-    // Устанавливаем классы по умолчанию
     const classesObj = this.getDefaultCellClasses();
 
-    // Устанавливаем основной цвет клетки
-    // По умолчанию белый.
+    // Устанавливаем цвет клетки по умолчанию.
     if (cellColor === Colors.Black) {
       classesObj['cell-black'] = true;
       classesObj['cell-white'] = false;
     }
 
-    // Покраска активной/атакуемой клетки
+    // Покраска клеток при выборе
     if (figure) {
-      // Цвет выбранной клетки
+      // ... цвет выбранной клетки
       if (cellStatus === CellStatus.Active) {
         this.resetBackgroundClasses(classesObj);
         classesObj['bg-primary'] = true;
 
-        // Цвет атакуемой клетки
+        // ... цвет атакуемой клетки
       } else if (cellStatus === CellStatus.Target) {
         this.resetBackgroundClasses(classesObj);
         classesObj['bg-danger'] = true;
@@ -84,6 +81,7 @@ export default class CellCssManager {
       classesObj['cell-can-select'] = false;
     }
 
+    // Выделение короля при шахе
     if (gameState === ChessGameStates.Check
       && figure?.color === currentStepColor
       && figure.figureName === FigureNames.King
@@ -92,7 +90,6 @@ export default class CellCssManager {
       classesObj['cell-king-on-attack'] = true;
     }
 
-    // При окончании игры убираем возможность выделения
     if (gameState === ChessGameStates.Checkmate || gameState === ChessGameStates.Mate) {
       classesObj['cell-can-select'] = false;
     }

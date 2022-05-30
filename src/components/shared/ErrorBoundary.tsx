@@ -25,7 +25,7 @@ export default class ErrorBoundary extends
     const { children } = this.props;
 
     if (hasError) {
-      return (<h2>Что-то пошло не так ...</h2>);
+      return (<h2>Something went wrong...</h2>);
     }
 
     return (

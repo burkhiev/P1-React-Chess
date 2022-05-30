@@ -10,16 +10,21 @@ import { Colors } from '../enums/Colors';
 import { ICell } from '../../models/cells/ICell';
 import IChessboard from '../../models/chessboards/IChessboard';
 
+/**
+ * Класс-фабрика для шахматных досок.
+ */
 export default class ChessboardFactory {
+  /** Размер доски(предполагается, что доска квадратная) */
   private static size: number = 8;
 
   /**
-     * Создает новую шахматную доску
-     * @returns Новая подготовленная шахматная доска
-     */
+   * Создает новую шахматную доску
+   * @returns Новая подготовленная шахматная доска
+   */
   static getNewBoard(): Chessboard {
     const chessboard = this.getClearBoard();
 
+    // Заполнение фигурами
     this.fillWithBlackFigures(chessboard);
     this.fillWithWhiteFigures(chessboard);
 
@@ -31,7 +36,7 @@ export default class ChessboardFactory {
    * Данный метод используется для ручного тестирования.
    * @param chessboard Заполняемая шахматная доска.
    */
-  private static specificFill(chessboard: IChessboard) {
+  private static test_specificFill(chessboard: IChessboard) {
     const { cells } = chessboard;
 
     cells[0][1].figure = new King(Colors.Black);
@@ -42,9 +47,9 @@ export default class ChessboardFactory {
   }
 
   /**
-     * Создает чистую шахматную доску заполненную клетками
-     * @returns шахматная доска
-     */
+   * Создает чистую шахматную доску.
+   * @returns шахматная доска
+   */
   static getClearBoard(): Chessboard {
     const cells: ICell[][] = [];
 
@@ -71,9 +76,9 @@ export default class ChessboardFactory {
   }
 
   /**
-     * Заполняет белыми фигурами полученную доску
-     * @param {Chessboard} chessboard Заполняемая доска
-     */
+   * Заполняет белыми фигурами полученную доску
+   * @param {Chessboard} chessboard Заполняемая доска
+   */
   private static fillWithWhiteFigures(chessboard: IChessboard) {
     const { cells } = chessboard;
 
@@ -100,9 +105,9 @@ export default class ChessboardFactory {
   }
 
   /**
-     * Заполняет черными фигурами полученную доску
-     * @param {Chessboard} chessboard Заполняемая доска
-     */
+   * Заполняет черными фигурами полученную доску
+   * @param {Chessboard} chessboard Заполняемая доска
+   */
   private static fillWithBlackFigures(chessboard: IChessboard) {
     const { cells } = chessboard;
 

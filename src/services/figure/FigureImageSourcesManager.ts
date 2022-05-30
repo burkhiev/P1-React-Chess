@@ -2,7 +2,7 @@ import { Colors } from '../enums/Colors';
 import { FigureNames } from '../../models/figures/FigureNames';
 
 /**
- * Хранилище картинок для соответствующих фигур
+ * Хранилище относительных файловых путей для картинок фигур.
  */
 export const FigureImageSources = {
   DEFAULT: '../../../static/chess/empty-cell.png',
@@ -21,7 +21,7 @@ export const FigureImageSources = {
 };
 
 /**
- * Класс отвечает за доступ к хранилищу картинок
+ * Класс отвечает за доступ к хранилищу файловых путей для картинок
  */
 export class FigureImageSourcesManager {
   static getFigureImageSource(figureName: FigureNames, figureColor: Colors): string {

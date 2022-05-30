@@ -7,12 +7,13 @@ import { Colors } from '../enums/Colors';
 import { CellStatus } from '../../models/cells/CellStates';
 
 interface IMoveActionOptions {
-  preMoveAction?: () => void,
-  postMoveAction?: () => void,
+  preMoveAction?: Action,
+  postMoveAction?: Action,
 }
 
 /**
- * Данный класс отвечает за логику передвижения шахматных фигур
+ * Данный класс отвечает за логику передвижения шахматных фигур.
+ * Класс создан для уменьшения кода класса ChessboardManager.
  */
 export default class ChessMovesManager {
   /** Шахматная доска */
@@ -46,14 +47,14 @@ export default class ChessMovesManager {
 
     this.setOnMoveAction = this.setOnMoveAction.bind(this);
     this.canMoveFromCell = this.canMoveFromCell.bind(this);
-    this.getReachingEnemyCells = this.getReachingEnemyCells.bind(this);
+    this.getBeatingEnemyCells = this.getBeatingEnemyCells.bind(this);
     this.isEnemies = this.isEnemies.bind(this);
     this.isTeammates = this.isTeammates.bind(this);
     this.findKingCell = this.findKingCell.bind(this);
   }
 
   /**
-   * Выполняет необходимые действия для клетки, при перемещении фигуры.
+   * Устанавливает действие для клетки, при перемещении фигуры.
    * @param from Клетка, из которой движется фигура.
    * @param to Клетка, в которую фигура движется.
    * @param options (Необязательный параметр) Хранит в себе действия, которые могут выполняться
@@ -142,7 +143,7 @@ export default class ChessMovesManager {
         }
 
         // Ищем противников, достающих обрабатываемую клетку
-        const reachingEnemiesCells = this.getReachingEnemyCells(nearKing, enemyColor, king);
+        const reachingEnemiesCells = this.getBeatingEnemyCells(nearKing, enemyColor, king);
 
         // Если таковых нет - клетка свободна
         if (reachingEnemiesCells.length === 0) {
@@ -190,8 +191,7 @@ export default class ChessMovesManager {
 
   /**
    * Проверяет клетку на доступность для атаки фигурами указанного цвета.
-   * Если одна из фигур указанного цвета, находится в клетке,
-   * передаваемой 1-ым параметром, то она не учитывается.
+   * Фигура, находящаяся в клетке, передаваемой 1-ым параметром, не учитывается.
    * @param cell Клетка, проверяемая на доступность для атаки.
    * @param enemyColor Цвет фигур.
    * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
@@ -200,7 +200,7 @@ export default class ChessMovesManager {
    * @returns Массив клеток, которые содержат фигуры цвета enemyColor,
    * а также способные достичь указанной клетки.
    */
-  getReachingEnemyCells(cell: ICell, enemyColor: Colors, ignoredCell?: ICell): ICell[] {
+  getBeatingEnemyCells(cell: ICell, enemyColor: Colors, ignoredCell?: ICell): ICell[] {
     if (!cell || !enemyColor) {
       throw new Error('Parameters cannot be null or undefined.');
     }
@@ -399,13 +399,14 @@ export default class ChessMovesManager {
    * @param cell Клетка, из которой ищем ходы.
    * @param enemyColor Цвет противника. Данный параметр используется
    * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
-   * @param process Метод, обрабатывающий любые 2 клетки.
+   * @param process Метод, выполняющий обработку относящуюся к текущей клетке(1-ый параметр)
+   * и к клеткам, на которые есть возможность совершить ход.
    * Если нужно прервать обработку возвращает false, иначе - true.
    * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
    * Используется для корректного расчета безопасного хода короля,
    * относительно фигур, имеющих нефиксированную дистанцию атаки(Ферзь, Ладья, Слон).
    */
-  processForCellsFigurePattern(
+  processForInCellFigurePattern(
     cell: ICell,
     enemyColor: Colors,
     process: ChessProcessPredicate,
@@ -445,7 +446,8 @@ export default class ChessMovesManager {
    * @param cell Клетка, из которой ищем ходы.
    * @param enemyColor Цвет противника. Данный параметр используется
    * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
-   * @param process Метод, обрабатывающий любые 2 клетки.
+   * @param process Метод, выполняющий обработку относящуюся к текущей клетке(1-ый параметр)
+   * и к клеткам, на которые есть возможность совершить ход.
    * Если нужно прервать обработку возвращает false, иначе - true.
    * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
    * Используется для корректного расчета безопасного хода короля,
@@ -466,7 +468,8 @@ export default class ChessMovesManager {
    * @param cell Клетка, из которой ищем ходы.
    * @param enemyColor Цвет противника. Данный параметр используется
    * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
-   * @param process Метод, обрабатывающий любые 2 клетки.
+   * @param process Метод, выполняющий обработку относящуюся к текущей клетке(1-ый параметр)
+   * и к клеткам, на которые есть возможность совершить ход.
    * Если нужно прервать обработку возвращает false, иначе - true.
    * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
    * Используется для корректного расчета безопасного хода короля,
@@ -487,7 +490,8 @@ export default class ChessMovesManager {
    * @param cell Клетка, из которой ищем ходы.
    * @param enemyColor Цвет противника. Данный параметр используется
    * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
-   * @param process Метод, обрабатывающий любые 2 клетки.
+   * @param process Метод, выполняющий обработку относящуюся к текущей клетке(1-ый параметр)
+   * и к клеткам, на которые есть возможность совершить ход.
    * Если нужно прервать обработку возвращает false, иначе - true.
    * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
    * Используется для корректного расчета безопасного хода короля,
@@ -509,7 +513,8 @@ export default class ChessMovesManager {
    * @param cell Клетка, из которой ищем ходы.
    * @param enemyColor Цвет противника. Данный параметр используется
    * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
-   * @param process Метод, обрабатывающий любые 2 клетки.
+   * @param process Метод, выполняющий обработку относящуюся к текущей клетке(1-ый параметр)
+   * и к клеткам, на которые есть возможность совершить ход.
    * Если нужно прервать обработку возвращает false, иначе - true.
    */
   processForKnightPatterns(cell: ICell, enemyColor: Colors, process: ChessProcessPredicate) {
@@ -543,7 +548,8 @@ export default class ChessMovesManager {
    * @param cell Клетка, из которой ищем ходы.
    * @param enemyColor Цвет противника. Данный параметр используется
    * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
-   * @param process Метод, обрабатывающий любые 2 клетки.
+   * @param process Метод, выполняющий обработку относящуюся к текущей клетке(1-ый параметр)
+   * и к клеткам, на которые есть возможность совершить ход.
    * Если нужно прервать обработку возвращает false, иначе - true.
    * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
    * Используется для корректного расчета безопасного хода короля,
@@ -593,7 +599,8 @@ export default class ChessMovesManager {
    * @param enemyColor Цвет противника. Данный параметр используется
    * для расчета пути пешки, т.к. пешка имеет различное количество
    * вариантов ходов в зависимости от наличия противника в некоторых клетках.
-   * @param process Метод, обрабатывающий любые 2 клетки.
+   * @param process Метод, выполняющий обработку относящуюся к текущей клетке(1-ый параметр)
+   * и к клеткам, на которые есть возможность совершить ход.
    * Если нужно прервать обработку возвращает false, иначе - true.
    */
   processForPawnPatterns(cell: ICell, enemyColor: Colors, process: ChessProcessPredicate) {
@@ -732,7 +739,8 @@ export default class ChessMovesManager {
    * @param cell Клетка, из которой ищем ходы.
    * @param enemyColor Цвет противника. Данный параметр используется
    * для расчета пути из клетки, на которой либо стоит противник, либо на которой никого нет.
-   * @param process Метод, обрабатывающий любые 2 клетки.
+   * @param process Метод, выполняющий обработку относящуюся к текущей клетке(1-ый параметр)
+   * и к клеткам, на которые есть возможность совершить ход.
    * Если нужно прервать обработку возвращает false, иначе - true.
    * @param ignoredCell (Опциональный параметр) Игнорируемая фигура.
    * Используется для корректного расчета безопасного хода короля,

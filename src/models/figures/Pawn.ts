@@ -7,6 +7,7 @@ export default class Pawn implements IFigure {
 
   readonly color: Colors;
 
+  /** Данный флаг влияет на поведение пешки при её первом ходе. */
   moved: boolean;
 
   constructor(color: Colors) {

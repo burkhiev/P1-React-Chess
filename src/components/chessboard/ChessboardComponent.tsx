@@ -12,13 +12,13 @@ import { AppConfirms } from '../../globals';
 import ChessboardManager from '../../services/chessboard/ChessboardManager';
 import ChessboardFactory from '../../services/chessboard/ChessboardFactory';
 
-const getDefaultChessboardStatusBarCss = () => ({
+const getDefaultStatusBarCss = () => ({
   'py-4': true,
   'border-bottom': true,
   'text-center': true,
 });
 
-const getDefaultChessboardTeamHeaderCss = () => ({
+const getDefaultTeamHeaderCss = () => ({
   'col-4': true,
   'display-6': true,
   'border-bottom': true,
@@ -39,7 +39,7 @@ export default function ChessboardComponent() {
   // чтобы была возможность обновить компонент после изменения gameState.
   const [gameState, setGameState] = useState(chessManager.gameInfo.gameState);
 
-  function setDefaultComponentState() {
+  function setDefaultComponentStates() {
     const chessboard = ChessboardFactory.getNewBoard();
     setCells(chessManager.setNewChessboard(chessboard));
     setGameInfo(chessManager.gameInfo);
@@ -50,13 +50,13 @@ export default function ChessboardComponent() {
   const startNewGameBtnOnClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (AppConfirms.confirmRestartGame()) {
-      setDefaultComponentState();
+      setDefaultComponentStates();
     }
   };
 
   const startNewGameAtTheEndBtnOnClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    setDefaultComponentState();
+    setDefaultComponentStates();
   };
 
   chessManager.onSwitchPlayerCallback = () => {
@@ -67,9 +67,10 @@ export default function ChessboardComponent() {
     setGameState(gameInfo.gameState);
   };
 
-  const whiteTeamHeaderCss = getDefaultChessboardTeamHeaderCss();
-  const blackTeamHeaderCss = getDefaultChessboardTeamHeaderCss();
+  const whiteTeamHeaderCss = getDefaultTeamHeaderCss();
+  const blackTeamHeaderCss = getDefaultTeamHeaderCss();
 
+  // выделение текущей команды
   if (currentColor === Colors.White) {
     blackTeamHeaderCss['text-muted'] = true;
 
@@ -90,10 +91,11 @@ export default function ChessboardComponent() {
 
   const rawWhiteTeamHeaderCss = classNames(whiteTeamHeaderCss);
   const rawBlackTeamHeaderCss = classNames(blackTeamHeaderCss, 'offset-4');
-
-  const rawStatusBarCss = classNames(getDefaultChessboardStatusBarCss());
+  const rawStatusBarCss = classNames(getDefaultStatusBarCss());
 
   let statusBar: ReactElement;
+
+  // изменение statusbar при окончании/продолжении игры.
   if (gameState === ChessGameStates.Default
     || gameState === ChessGameStates.InProcess
     || gameState === ChessGameStates.Check) {

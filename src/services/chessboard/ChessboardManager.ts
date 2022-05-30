@@ -31,7 +31,7 @@ export default class ChessboardManager {
   /** Хранит в себе последнюю выбранную клетку. */
   lastSelectedCell: ICell | undefined;
 
-  /** Хранит информацию о текущем шаге. */
+  /** Хранит остальную информацию о текущей ситуации на доске. */
   gameInfo: IChessGameInfo;
 
   /** Предназначен для изменения визуальной части при смене игрока. */
@@ -54,8 +54,9 @@ export default class ChessboardManager {
     this.onAction = this.onAction.bind(this);
     this.switchPlayer = this.switchPlayer.bind(this);
 
-    // Данный код дублируется из метода setNewChessboard, т.к.
-    // компилятор требует установки начальных значений для полей класса в конструкторе.
+    // Данный код дублируется из метода setNewChessboard,
+    // т.к. компилятор требует установки начальных значений
+    // для полей класса в конструкторе явно(не через ф-ю).
     this.chessboard = chessboard;
     this.movesManager = new ChessMovesManager(this.chessboard);
     this.gameInfo = {
@@ -203,7 +204,7 @@ export default class ChessboardManager {
   }
 
   /**
-   * Переключает цвет текущего игрока.
+   * Выполняет действия для переключения текущего игрока.
    */
   private switchPlayer() {
     const { gameInfo } = this;
@@ -239,7 +240,7 @@ export default class ChessboardManager {
   private getNextGameState(teamColor: Colors): ChessGameStates {
     const kingCell = this.movesManager.findKingCell(teamColor);
     const enemyColor = kingCell.figure?.color === Colors.White ? Colors.Black : Colors.White;
-    const reachingEnemyCells = this.movesManager.getReachingEnemyCells(kingCell, enemyColor);
+    const reachingEnemyCells = this.movesManager.getBeatingEnemyCells(kingCell, enemyColor);
 
     // Проверка на шах/шахмат
     if (reachingEnemyCells.length) {
@@ -253,7 +254,7 @@ export default class ChessboardManager {
       // Поиск союзной фигуры, которая готова помочь королю.
       const enemyCell = reachingEnemyCells[0];
       const reachingAlliesCells = this.movesManager
-        .getReachingEnemyCells(enemyCell, teamColor, kingCell);
+        .getBeatingEnemyCells(enemyCell, teamColor, kingCell);
 
       if (reachingAlliesCells.length) {
         return ChessGameStates.Check; // Шах
@@ -262,7 +263,7 @@ export default class ChessboardManager {
       return ChessGameStates.Checkmate; // Шахмат
     }
 
-    // Короля никто не бьет
+    // Король в безопасности
     this.gameInfo.priorityTargetCell = undefined;
 
     // Проверка на ничью
@@ -270,7 +271,7 @@ export default class ChessboardManager {
     const enemyCells = this.getOneTeamCells(enemyColor);
 
     if (teamCells.length === 1 && enemyCells.length === 1) {
-      // Проверка на корректность остальной логики.
+      // Проверка на корректность.
       // Последние фигуры могут быть только королями.
       if (teamCells[0].figure?.figureName !== FigureNames.King
         || enemyCells[0].figure?.figureName !== FigureNames.King) {
@@ -337,19 +338,21 @@ export default class ChessboardManager {
     cell.status = CellStatus.Active;
     const enemyColor = cell.figure.color === Colors.Black ? Colors.White : Colors.Black;
 
-    // Данная ф-я устанавливает на клетки обработчики для перемещения фигур
+    // Данная ф-я устанавливает на клетки обработчики события для перемещения фигур
     const process: ChessProcessPredicate = (current: ICell, next: ICell) => {
       // Для короля проверяем следующую клетку на безопасность
       if (current.figure?.figureName === FigureNames.King) {
-        const reachingEnemies = this.movesManager.getReachingEnemyCells(next, enemyColor, current);
+        const reachingEnemies = this.movesManager.getBeatingEnemyCells(next, enemyColor, current);
         if (reachingEnemies.length) {
           return true; // продолжить обработку
         }
       }
 
-      if (!this.gameInfo.priorityTargetCell
-        || this.gameInfo.priorityTargetCell === next
-        || current.figure?.figureName === FigureNames.King
+      // Можно сделать ход если:
+      if (
+        !this.gameInfo.priorityTargetCell // 1. Нет приоритетной цели(фигура бьющая короля)
+        || this.gameInfo.priorityTargetCell === next // 2. Цель есть, и она на следующей клетке
+        || current.figure?.figureName === FigureNames.King // 3. Король всегда имеет право на ход.
       ) {
         const options = {
           postMoveAction: () => {
@@ -363,7 +366,7 @@ export default class ChessboardManager {
       return true; // продолжить обработку
     };
 
-    this.movesManager.processForCellsFigurePattern(cell, enemyColor, process);
+    this.movesManager.processForInCellFigurePattern(cell, enemyColor, process);
     this.selected = true;
     this.lastSelectedCell = cell;
   }
@@ -413,7 +416,7 @@ export default class ChessboardManager {
         return true;
       };
 
-    this.movesManager.processForCellsFigurePattern(
+    this.movesManager.processForInCellFigurePattern(
       cell,
       priorityTargetCell.figure.color,
       priorityTargetCellSearchProcess,

@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react';
+import React, { useState } from 'react';
 
 import { CellStatus } from '../../models/cells/CellStates';
 import { ICell } from '../../models/cells/ICell';
@@ -22,13 +22,11 @@ interface ICellComponentProps {
 export default function CellComponent(props: ICellComponentProps) {
   const { cell, onSelect, currentStep } = props;
 
-  // Извлечение полей для корректного обновления классов React компонента.
   const [figure, setFigure] = useState(cell.figure);
   const [status, setStatus] = useState(cell.status);
   const [gameState, setGameState] = useState(currentStep.gameState);
   const [currentStepColor, setCurrentStepColor] = useState(currentStep.currentTeamColor);
 
-  // Установка действий для обновления состояния.
   // Данный метод используется для контроля визуальной части из Chessboard.
   cell.updateCellComponentStates = () => {
     if (currentStep.gameState === ChessGameStates.Checkmate
@@ -73,17 +71,12 @@ export default function CellComponent(props: ICellComponentProps) {
     gameState,
   );
 
-  let content: ReactElement = <EmptyFigureComponent hasDot={false} />;
+  let content;
 
-  if (figure) {
-    content = (
-      <FigureComponent
-        figureName={figure.figureName}
-        figureColor={figure.color}
-      />
-    );
-  } else if (status === CellStatus.OnWay) {
+  if (status === CellStatus.OnWay) {
     content = <EmptyFigureComponent hasDot />;
+  } else if (figure) {
+    content = <FigureComponent figureName={figure.figureName} figureColor={figure.color} />;
   }
 
   return (

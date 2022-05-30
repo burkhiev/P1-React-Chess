@@ -13,8 +13,14 @@ export type ChessProcessPredicate = (
   color?: Colors
 ) => boolean;
 
+/**
+ * Action из C#
+ */
 export type Action = () => void;
 
+/**
+ * Класс для шаблонных вызовов функции confirm.
+ */
 export class AppConfirms {
   static confirmRestartGame(): boolean {
     return confirm('Are you sure to start a new game.');

@@ -9,6 +9,14 @@ export interface ICell {
   row: number,
   col: number,
   get isEmpty(): boolean
+
+  /**
+   * Callback для обновления состояния компонента клетки.
+   */
   updateCellComponentStates: (() => void) | undefined
+
+  /**
+   * Callback для универсальной команды нажатия: Chessboard.onAction()
+   */
   action: (() => void) | undefined
 }
