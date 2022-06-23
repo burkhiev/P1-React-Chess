@@ -1,23 +1,23 @@
 {
-  "name": "reactchess",
+  "name": "react-chess",
   "version": "1.0.0",
-  "main": "./dist/index.html",
+  "private": true,
   "scripts": {
-    "build": "webpack",
+    "build": "webpack --progress --color",
     "lint": "eslint ./src/**/*.* --color",
     "lint:fix": "eslint --fix ./src/**/*.* --color",
     "test": "jest"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/burkhiev/React-Chess.git"
+    "url": "git+https://github.com/burkhiev/P1-React-Chess"
   },
   "author": "Burkhiev Victor",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/burkhiev/React-Chess/issues"
+    "url": "https://github.com/burkhiev/P1-React-Chess/issues"
   },
-  "homepage": "https://github.com/burkhiev/React-Chess#readme",
+  "homepage": "https://github.com/burkhiev/P1-React-Chess#readme",
   "description": "",
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.1",
